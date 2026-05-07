@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
-import { LayoutDashboard, History, Calendar, Settings, Plus } from "lucide-react";
+import { Plus, Minus, X } from "lucide-react";
 import { NavItem } from "../components/ui/NavItem";
+import { NAV_ITEMS } from "../config/navigation";
 
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
@@ -14,6 +15,9 @@ interface MainLayoutProps {
 export function MainLayout({ children, activeTab, setActiveTab, onAddTransactionClick }: MainLayoutProps) {
   const appWindow = getCurrentWindow();
 
+  const topItems = NAV_ITEMS.filter(item => !item.bottom);
+  const bottomItems = NAV_ITEMS.filter(item => item.bottom);
+
   return (
     <div className="flex h-screen bg-[#020617] text-slate-50 font-sans selection:bg-blue-500/30">
       {/* Sidebar */}
@@ -25,13 +29,29 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Portfolio</span>
         </div>
         
-        <NavItem icon={<LayoutDashboard size={18}/>} label="Dashboard" active={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
-        <NavItem icon={<History size={18}/>} label="History" active={activeTab === "history"} onClick={() => setActiveTab("history")} />
-        <NavItem icon={<Calendar size={18}/>} label="Dividends" active={activeTab === "dividends"} onClick={() => setActiveTab("dividends")} />
+        {topItems.map(item => (
+          <NavItem
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            active={activeTab === item.id}
+            onClick={() => setActiveTab(item.id)}
+          />
+        ))}
         
-        <div className="mt-auto pb-4">
-          <NavItem icon={<Settings size={18}/>} label="Settings" active={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
-        </div>
+        {bottomItems.length > 0 && (
+          <div className="mt-auto pb-4">
+            {bottomItems.map(item => (
+              <NavItem
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                active={activeTab === item.id}
+                onClick={() => setActiveTab(item.id)}
+              />
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* Main Content */}
@@ -51,18 +71,22 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
               <Plus size={18} className="transition-transform group-hover:rotate-90" /> Add Transaction
             </button>
 
-            {/* Window Controls (macOS style) */}
-            <div className="flex items-center gap-2.5 pl-5 border-l border-slate-800/80 h-8 z-50 relative">
+            {/* Window Controls (Windows style) */}
+            <div className="flex items-center gap-1 pl-5 border-l border-slate-800/80 h-8 z-50 relative">
               <button 
                 onClick={() => appWindow.minimize().catch(e => alert("Minimize error: " + e))}
-                className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:bg-yellow-400 shadow-[inset_0_1px_4px_rgba(0,0,0,0.3)] transition-colors focus:outline-none cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-700/60 hover:text-slate-100 rounded-md transition-colors focus:outline-none cursor-pointer"
                 title="Minimize"
-              />
+              >
+                <Minus size={15} strokeWidth={2} />
+              </button>
               <button 
                 onClick={() => appWindow.close().catch(e => alert("Close error: " + e))}
-                className="w-3.5 h-3.5 rounded-full bg-rose-500 hover:bg-rose-400 shadow-[inset_0_1px_4px_rgba(0,0,0,0.3)] transition-colors focus:outline-none cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white rounded-md transition-colors focus:outline-none cursor-pointer"
                 title="Close"
-              />
+              >
+                <X size={15} strokeWidth={2} />
+              </button>
             </div>
           </div>
         </header>
