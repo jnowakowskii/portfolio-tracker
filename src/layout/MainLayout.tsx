@@ -6,9 +6,10 @@ interface MainLayoutProps {
   children: ReactNode;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onAddTransactionClick?: () => void;
 }
 
-export function MainLayout({ children, activeTab, setActiveTab }: MainLayoutProps) {
+export function MainLayout({ children, activeTab, setActiveTab, onAddTransactionClick }: MainLayoutProps) {
   return (
     <div className="flex h-screen bg-slate-950 text-slate-50 font-sans">
       {/* Sidebar */}
@@ -33,7 +34,7 @@ export function MainLayout({ children, activeTab, setActiveTab }: MainLayoutProp
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 border-b border-slate-800 flex items-center justify-between px-8">
           <h2 className="text-lg font-semibold capitalize">{activeTab}</h2>
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors px-4 py-2 rounded-lg text-sm font-medium">
+          <button onClick={onAddTransactionClick} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-colors px-4 py-2 rounded-lg text-sm font-medium">
             <Plus size={16} /> Add Transaction
           </button>
         </header>
