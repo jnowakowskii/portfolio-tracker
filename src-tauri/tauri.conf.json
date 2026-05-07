@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
-        "title": "temp-folder",
+        "title": "Portfolio Tracker",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "fullscreen": true
       }
     ],
     "security": {
