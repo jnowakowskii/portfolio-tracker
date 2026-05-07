@@ -9,18 +9,20 @@ interface NavItemProps {
 
 export function NavItem({ icon, label, active, onClick }: NavItemProps) {
   return (
-    <button 
-      onClick={onClick} 
-      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl w-full transition-all duration-200 ${
-        active 
-          ? 'bg-gradient-to-r from-blue-600/20 to-blue-600/5 text-blue-400 border border-blue-500/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]' 
-          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'
-      }`}
+    <button
+      onClick={onClick}
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-all duration-150"
+      style={active
+        ? { background: "#262626", color: "#ffffff", border: "1px solid #404040" }
+        : { background: "transparent", color: "#737373", border: "1px solid transparent" }
+      }
+      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#d4d4d4"; } }}
+      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#737373"; } }}
     >
-      <div className={`${active ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'} transition-colors`}>
+      <div style={{ color: active ? "#ffffff" : "#525252" }}>
         {icon}
       </div>
-      <span className="font-medium tracking-wide text-sm">{label}</span>
+      <span className="font-medium text-sm tracking-wide">{label}</span>
     </button>
   );
 }

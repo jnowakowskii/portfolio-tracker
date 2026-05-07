@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import { Plus, Minus, X } from "lucide-react";
 import { NavItem } from "../components/ui/NavItem";
 import { NAV_ITEMS } from "../config/navigation";
-
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import logoUrl from "../assets/logo.png";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,16 +19,24 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
   const bottomItems = NAV_ITEMS.filter(item => item.bottom);
 
   return (
-    <div className="flex h-screen bg-[#020617] text-slate-50 font-sans selection:bg-blue-500/30">
+    <div className="flex h-screen font-sans" style={{ background: "#0a0a0a", color: "#ffffff" }}>
+
       {/* Sidebar */}
-      <nav className="w-56 bg-[#0f172a] border-r border-slate-800 flex flex-col p-4 space-y-2 z-10 shadow-2xl relative">
-        <div className="flex items-center gap-3 px-2 mb-10 mt-4">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/25 border border-blue-400/20">
-            P
+      <nav
+        className="w-56 flex flex-col p-4 space-y-1 z-10 shrink-0"
+        style={{ background: "#111111", borderRight: "1px solid #262626" }}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-2 mb-8 mt-3">
+          <div
+            className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
+            style={{ background: "#ffffff" }}
+          >
+            <img src={logoUrl} alt="Portfolio logo" className="w-full h-full object-cover" />
           </div>
-          <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Portfolio</span>
+          <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Portfolio Tracker</span>
         </div>
-        
+
         {topItems.map(item => (
           <NavItem
             key={item.id}
@@ -38,9 +46,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             onClick={() => setActiveTab(item.id)}
           />
         ))}
-        
+
         {bottomItems.length > 0 && (
-          <div className="mt-auto pb-4">
+          <div className="mt-auto pt-4">
             {bottomItems.map(item => (
               <NavItem
                 key={item.id}
@@ -54,45 +62,67 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
         )}
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Glassmorphism Header */}
-        <header className="h-20 bg-[#020617]/70 backdrop-blur-md border-b border-slate-800/60 flex items-center justify-between px-10 sticky top-0 z-20">
-          <h2 className="text-2xl font-bold capitalize tracking-tight text-slate-100 pointer-events-none">{activeTab}</h2>
-          
-          {/* Draggable Area - Fills empty space */}
+      {/* Main */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+
+        {/* Header */}
+        <header
+          className="h-16 flex items-center justify-between px-8 shrink-0"
+          style={{
+            background: "rgba(10,10,10,0.85)",
+            backdropFilter: "blur(8px)",
+            borderBottom: "1px solid #262626",
+          }}
+        >
+          <h2 className="text-lg font-semibold capitalize tracking-tight pointer-events-none" style={{ color: "#ffffff" }}>
+            {activeTab}
+          </h2>
+
+          {/* Draggable */}
           <div data-tauri-drag-region className="flex-1 h-full mx-4 cursor-move" />
-          
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={onAddTransactionClick} 
-              className="group flex items-center gap-2 bg-blue-600 hover:bg-blue-500 transition-all duration-300 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-500/40 border border-blue-500/30 active:scale-95 z-50 relative"
+
+          <div className="flex items-center gap-4">
+            {/* Add Transaction */}
+            <button
+              onClick={onAddTransactionClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 group"
+              style={{ background: "#ffffff", color: "#0a0a0a", border: "1px solid #ffffff" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
             >
-              <Plus size={18} className="transition-transform group-hover:rotate-90" /> Add Transaction
+              <Plus size={16} className="transition-transform group-hover:rotate-90" />
+              Add Transaction
             </button>
 
-            {/* Window Controls (Windows style) */}
-            <div className="flex items-center gap-1 pl-5 border-l border-slate-800/80 h-8 z-50 relative">
-              <button 
+            {/* Window controls */}
+            <div className="flex items-center gap-0.5 pl-4" style={{ borderLeft: "1px solid #262626" }}>
+              <button
                 onClick={() => appWindow.minimize().catch(e => alert("Minimize error: " + e))}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-slate-700/60 hover:text-slate-100 rounded-md transition-colors focus:outline-none cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
+                style={{ color: "#525252" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#262626"; e.currentTarget.style.color = "#ffffff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#525252"; }}
                 title="Minimize"
               >
-                <Minus size={15} strokeWidth={2} />
+                <Minus size={14} strokeWidth={2} />
               </button>
-              <button 
+              <button
                 onClick={() => appWindow.close().catch(e => alert("Close error: " + e))}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white rounded-md transition-colors focus:outline-none cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
+                style={{ color: "#525252" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.color = "#ffffff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#525252"; }}
                 title="Close"
               >
-                <X size={15} strokeWidth={2} />
+                <X size={14} strokeWidth={2} />
               </button>
             </div>
           </div>
         </header>
 
-        <section className="p-10 overflow-y-auto">
-          <div className="max-w-7xl mx-auto space-y-8">
+        {/* Content */}
+        <section className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-7xl mx-auto space-y-6">
             {children}
           </div>
         </section>

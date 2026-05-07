@@ -15,10 +15,10 @@ export interface NavSection {
  * its corresponding page component.
  */
 export const NAV_ITEMS: NavSection[] = [
-  { id: "dashboard",  label: "Dashboard",  icon: <LayoutDashboard size={18} /> },
-  { id: "history",    label: "History",     icon: <History size={18} /> },
-  { id: "dividends",  label: "Dividends",   icon: <Calendar size={18} /> },
-  { id: "analytics",  label: "Analytics",   icon: <BarChart3 size={18} /> },
-  { id: "watchlist",  label: "Watchlist",    icon: <Eye size={18} /> },
-  { id: "settings",   label: "Settings",    icon: <Settings size={18} />, bottom: true },
+  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+  { id: "history", label: "History", icon: <History size={18} /> },
+  { id: "dividends", label: "Dividends", icon: <Calendar size={18} /> },
+  { id: "analytics", label: "Analytics", icon: <BarChart3 size={18} /> },
+  { id: "watchlist", label: "Watchlist", icon: <Eye size={18} /> },
+  { id: "settings", label: "Settings", icon: <Settings size={18} />, bottom: true },
 ];

@@ -1,10 +1,242 @@
+use std::collections::HashMap;
+use std::sync::Mutex;
+use serde::{Deserialize, Serialize};
+use tauri::State;
 use tauri_plugin_sql::{Migration, MigrationKind};
+
+// ── Yahoo Finance auth state ───────────────────────────────────────────
+
+struct YahooAuth {
+    crumb: Mutex<Option<String>>,
+    cookie: Mutex<Option<String>>,
+}
+
+// ── Yahoo Finance response types ───────────────────────────────────────
+
+#[derive(Debug, Deserialize)]
+struct YahooQuoteResponse {
+    #[serde(rename = "quoteResponse")]
+    quote_response: YahooQuoteResult,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooQuoteResult {
+    result: Vec<YahooQuote>,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooQuote {
+    symbol: String,
+    #[serde(rename = "regularMarketPrice", default)]
+    regular_market_price: Option<f64>,
+    #[serde(rename = "regularMarketChangePercent", default)]
+    regular_market_change_percent: Option<f64>,
+    #[serde(default)]
+    currency: Option<String>,
+}
+
+// ── Public return types ────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Clone)]
+pub struct MarketQuote {
+    pub symbol: String,
+    pub price: f64,
+    pub change_percent: f64,
+    pub currency: String,
+}
+
+// ── Cookie + Crumb helpers ─────────────────────────────────────────────
+
+async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        .redirect(reqwest::redirect::Policy::limited(10))
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    // Step 1: Hit the consent/finance page to get cookies
+    let resp = client
+        .get("https://fc.yahoo.com/")
+        .send()
+        .await
+        .map_err(|e| format!("Cookie request failed: {}", e))?;
+
+    // Collect Set-Cookie headers
+    let cookies: Vec<String> = resp
+        .headers()
+        .get_all("set-cookie")
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .map(|v| {
+            v.split(';').next().unwrap_or("").to_string()
+        })
+        .filter(|c| !c.is_empty())
+        .collect();
+
+    let cookie_header = cookies.join("; ");
+
+    // Step 2: Fetch the crumb using the cookies
+    let crumb_resp = client
+        .get("https://query2.finance.yahoo.com/v1/test/getcrumb")
+        .header("cookie", &cookie_header)
+        .send()
+        .await
+        .map_err(|e| format!("Crumb request failed: {}", e))?;
+
+    if !crumb_resp.status().is_success() {
+        return Err(format!("Crumb endpoint returned status {}", crumb_resp.status()));
+    }
+
+    let crumb = crumb_resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read crumb: {}", e))?;
+
+    if crumb.is_empty() || crumb.contains("<!DOCTYPE") {
+        return Err("Received invalid crumb (HTML instead of token)".to_string());
+    }
+
+    Ok((crumb, cookie_header))
+}
+
+/// Shared helper to ensure we have valid auth, refreshing if needed
+async fn ensure_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), String> {
+    let cached_crumb = auth.crumb.lock().unwrap().clone();
+    let cached_cookie = auth.cookie.lock().unwrap().clone();
+
+    match (cached_crumb, cached_cookie) {
+        (Some(c), Some(k)) => Ok((c, k)),
+        _ => {
+            let (new_crumb, new_cookie) = fetch_crumb_and_cookie().await?;
+            *auth.crumb.lock().unwrap() = Some(new_crumb.clone());
+            *auth.cookie.lock().unwrap() = Some(new_cookie.clone());
+            Ok((new_crumb, new_cookie))
+        }
+    }
+}
+
+/// Refresh auth credentials
+async fn refresh_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), String> {
+    let (new_crumb, new_cookie) = fetch_crumb_and_cookie().await?;
+    *auth.crumb.lock().unwrap() = Some(new_crumb.clone());
+    *auth.cookie.lock().unwrap() = Some(new_cookie.clone());
+    Ok((new_crumb, new_cookie))
+}
+
+// ── Tauri commands ─────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn get_market_data(
+    symbols: Vec<String>,
+    auth: State<'_, YahooAuth>,
+) -> Result<Vec<MarketQuote>, String> {
+    if symbols.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let (crumb, cookie) = ensure_auth(&auth).await?;
+    let result = fetch_quotes(&symbols, &crumb, &cookie).await;
+
+    match result {
+        Ok(quotes) => Ok(quotes),
+        Err(_) => {
+            let (new_crumb, new_cookie) = refresh_auth(&auth).await?;
+            fetch_quotes(&symbols, &new_crumb, &new_cookie).await
+        }
+    }
+}
+
+#[tauri::command]
+async fn get_fx_rates(
+    auth: State<'_, YahooAuth>,
+) -> Result<HashMap<String, f64>, String> {
+    // Fetch FX pairs relative to PLN
+    let fx_symbols = vec![
+        "USDPLN=X".to_string(),
+        "EURPLN=X".to_string(),
+        "GBPPLN=X".to_string(),
+    ];
+
+    let (crumb, cookie) = ensure_auth(&auth).await?;
+    let result = fetch_quotes(&fx_symbols, &crumb, &cookie).await;
+
+    let quotes = match result {
+        Ok(q) => q,
+        Err(_) => {
+            let (new_crumb, new_cookie) = refresh_auth(&auth).await?;
+            fetch_quotes(&fx_symbols, &new_crumb, &new_cookie).await?
+        }
+    };
+
+    let mut rates: HashMap<String, f64> = HashMap::new();
+    // PLN → PLN is always 1.0
+    rates.insert("PLN".to_string(), 1.0);
+
+    for q in quotes {
+        // Symbol is like "USDPLN=X", extract the 3-letter currency code
+        let currency = q.symbol.replace("PLN=X", "");
+        if !currency.is_empty() && q.price > 0.0 {
+            rates.insert(currency, q.price);
+        }
+    }
+
+    Ok(rates)
+}
+
+async fn fetch_quotes(
+    symbols: &[String],
+    crumb: &str,
+    cookie: &str,
+) -> Result<Vec<MarketQuote>, String> {
+    let joined = symbols.join(",");
+    let url = format!(
+        "https://query1.finance.yahoo.com/v7/finance/quote?symbols={}&crumb={}",
+        joined, crumb
+    );
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get(&url)
+        .header("cookie", cookie)
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Yahoo API returned status {}", response.status()));
+    }
+
+    let data: YahooQuoteResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse API response: {}", e))?;
+
+    let quotes: Vec<MarketQuote> = data
+        .quote_response
+        .result
+        .into_iter()
+        .map(|q| MarketQuote {
+            symbol: q.symbol,
+            price: q.regular_market_price.unwrap_or(0.0),
+            change_percent: q.regular_market_change_percent.unwrap_or(0.0),
+            currency: q.currency.unwrap_or_else(|| "USD".to_string()),
+        })
+        .collect();
+
+    Ok(quotes)
+}
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
+
+// ── App entry ──────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,13 +254,23 @@ pub fn run() {
                 date TEXT NOT NULL
             );",
             kind: MigrationKind::Up,
-        }
+        },
+        Migration {
+            version: 2,
+            description: "add_currency_column",
+            sql: "ALTER TABLE transactions ADD COLUMN currency TEXT NOT NULL DEFAULT 'PLN';",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
+        .manage(YahooAuth {
+            crumb: Mutex::new(None),
+            cookie: Mutex::new(None),
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::default().add_migrations("sqlite:portfolio.db", migrations).build())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_fx_rates])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

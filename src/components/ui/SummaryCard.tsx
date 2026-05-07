@@ -11,29 +11,31 @@ interface SummaryCardProps {
 
 export function SummaryCard({ title, value, change, isPositive, icon }: SummaryCardProps) {
   return (
-    <div className="bg-gradient-to-br from-[#0f172a] to-[#020617] border border-slate-800/80 p-6 rounded-2xl relative overflow-hidden shadow-lg group hover:border-slate-700 transition-colors duration-300">
-      {/* Decorative background glow */}
-      <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/10 transition-colors duration-500" />
-      
-      <div className="flex justify-between items-start mb-4">
-        <p className="text-sm font-medium text-slate-400">{title}</p>
-        <div className="p-2 bg-slate-800/50 rounded-lg text-slate-400 border border-slate-700/50 shadow-sm">
+    <div
+      className="relative p-6 rounded-xl transition-colors duration-200"
+      style={{ background: "#171717", border: "1px solid #262626" }}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = "#404040")}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = "#262626")}
+    >
+      <div className="flex justify-between items-start mb-5">
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#a3a3a3" }}>{title}</p>
+        <div className="p-1.5 rounded-lg" style={{ background: "#262626", color: "#a3a3a3" }}>
           {icon}
         </div>
       </div>
-      
-      <div className="flex flex-col gap-2">
-        <h3 className="text-3xl font-bold font-mono text-slate-50 tracking-tight">{value}</h3>
-        
-        <div className="flex items-center gap-2">
-          <span className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md ${
-            isPositive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-          }`}>
-            {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-            {change}
-          </span>
-        </div>
-      </div>
+
+      <h3 className="text-2xl font-bold font-mono mb-3 tracking-tight" style={{ color: "#ffffff" }}>{value}</h3>
+
+      <span
+        className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded"
+        style={isPositive
+          ? { background: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.15)" }
+          : { background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.12)" }
+        }
+      >
+        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        {change}
+      </span>
     </div>
   );
 }
