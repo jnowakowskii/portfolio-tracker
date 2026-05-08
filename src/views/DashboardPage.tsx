@@ -99,7 +99,7 @@ export function DashboardPage({
                 const isBuy = tx.side === "BUY";
                 const quote = quotes.find(q => q.symbol === tx.symbol);
                 const displayName = quote?.name ? `${quote.name} (${tx.symbol})` : tx.symbol;
-                
+
                 return (
                   <div
                     key={tx.id}

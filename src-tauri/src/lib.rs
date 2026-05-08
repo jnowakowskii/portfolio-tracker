@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use serde::{Deserialize, Serialize};
 use tauri::State;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
@@ -78,9 +78,7 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
         .get_all("set-cookie")
         .iter()
         .filter_map(|v| v.to_str().ok())
-        .map(|v| {
-            v.split(';').next().unwrap_or("").to_string()
-        })
+        .map(|v| v.split(';').next().unwrap_or("").to_string())
         .filter(|c| !c.is_empty())
         .collect();
 
@@ -95,7 +93,10 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
         .map_err(|e| format!("Crumb request failed: {}", e))?;
 
     if !crumb_resp.status().is_success() {
-        return Err(format!("Crumb endpoint returned status {}", crumb_resp.status()));
+        return Err(format!(
+            "Crumb endpoint returned status {}",
+            crumb_resp.status()
+        ));
     }
 
     let crumb = crumb_resp
@@ -157,7 +158,6 @@ async fn get_market_data(
     }
 }
 
-
 /// Single-batch command: fetches user ticker symbols AND FX pairs in one HTTP
 /// request, returns them pre-split so the frontend needs exactly one Yahoo call.
 #[tauri::command]
@@ -201,7 +201,10 @@ async fn get_combined_data(
 
     let fx_rates = parse_fx_rates(fx_quotes);
 
-    Ok(CombinedData { market_quotes, fx_rates })
+    Ok(CombinedData {
+        market_quotes,
+        fx_rates,
+    })
 }
 
 async fn fetch_quotes(
@@ -266,12 +269,6 @@ fn parse_fx_rates(quotes: Vec<MarketQuote>) -> HashMap<String, f64> {
     rates
 }
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 // ── App entry ──────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -305,8 +302,12 @@ pub fn run() {
             cookie: Mutex::new(None),
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_sql::Builder::default().add_migrations("sqlite:portfolio.db", migrations).build())
-        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_combined_data])
+        .plugin(
+            tauri_plugin_sql::Builder::default()
+                .add_migrations("sqlite:portfolio.db", migrations)
+                .build(),
+        )
+        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
