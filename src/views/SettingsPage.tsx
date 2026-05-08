@@ -140,7 +140,7 @@ export function SettingsPage({
           {/* Accordion Header */}
           <button
             className="w-full flex items-center justify-between px-6 py-4 transition-colors"
-            style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "none" }}
+            style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "1px solid transparent" }}
             onClick={() => setDiagnosticsOpen(o => !o)}
             onMouseEnter={e => (e.currentTarget.style.background = "#1c1c1c")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -156,7 +156,7 @@ export function SettingsPage({
               style={{
                 color: "#525252",
                 transform: diagnosticsOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
+                transition: "transform 0.75s ease",
               }}
             />
           </button>
@@ -166,7 +166,7 @@ export function SettingsPage({
             style={{
               maxHeight: diagnosticsOpen ? "600px" : "0px",
               overflow: "hidden",
-              transition: "max-height 0.3s ease",
+              transition: "max-height 0.75s ease",
             }}
           >
             <div className="px-6 py-5 space-y-5">
