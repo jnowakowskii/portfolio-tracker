@@ -44,6 +44,12 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: "£",
 };
 
+/** Return type from the combined boot/refresh call. */
+export interface CombinedData {
+  market_quotes: MarketQuote[];
+  fx_rates: FxRates;
+}
+
 // ── API ────────────────────────────────────────────────────────────────
 
 /**
@@ -84,6 +90,15 @@ export async function getFxRates(): Promise<FxRates> {
 /** Like getFxRates but throws on error — used by App for diagnostics tracking. */
 export async function getFxRatesRaw(): Promise<FxRates> {
   return invoke<FxRates>("get_fx_rates");
+}
+
+/**
+ * Single-batch Yahoo Finance call for both market quotes and FX rates.
+ * Pass the ticker symbols currently in the portfolio; FX pairs are appended
+ * automatically on the Rust side. Throws on error — used by App for diagnostics.
+ */
+export async function getCombinedDataRaw(symbols: string[]): Promise<CombinedData> {
+  return invoke<CombinedData>("get_combined_data", { symbols });
 }
 
 

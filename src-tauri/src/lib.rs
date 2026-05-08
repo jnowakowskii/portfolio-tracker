@@ -48,6 +48,14 @@ pub struct MarketQuote {
     pub name: Option<String>,
 }
 
+/// Combined response for a single-batch boot/refresh call.
+/// Contains market quotes for user tickers and FX rates in one Yahoo request.
+#[derive(Debug, Serialize, Clone)]
+pub struct CombinedData {
+    pub market_quotes: Vec<MarketQuote>,
+    pub fx_rates: HashMap<String, f64>,
+}
+
 // ── Cookie + Crumb helpers ─────────────────────────────────────────────
 
 async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
@@ -171,19 +179,53 @@ async fn get_fx_rates(
         }
     };
 
-    let mut rates: HashMap<String, f64> = HashMap::new();
-    // PLN → PLN is always 1.0
-    rates.insert("PLN".to_string(), 1.0);
+    Ok(parse_fx_rates(quotes))
+}
 
-    for q in quotes {
-        // Symbol is like "USDPLN=X", extract the 3-letter currency code
-        let currency = q.symbol.replace("PLN=X", "");
-        if !currency.is_empty() && q.price > 0.0 {
-            rates.insert(currency, q.price);
+/// Single-batch command: fetches user ticker symbols AND FX pairs in one HTTP
+/// request, returns them pre-split so the frontend needs exactly one Yahoo call.
+#[tauri::command]
+async fn get_combined_data(
+    symbols: Vec<String>,
+    auth: State<'_, YahooAuth>,
+) -> Result<CombinedData, String> {
+    let fx_symbols = ["USDPLN=X", "EURPLN=X", "GBPPLN=X"];
+
+    // Build the full batch: user tickers + FX pairs (deduped)
+    let mut all_symbols: Vec<String> = symbols.clone();
+    for fx in &fx_symbols {
+        let s = fx.to_string();
+        if !all_symbols.contains(&s) {
+            all_symbols.push(s);
         }
     }
 
-    Ok(rates)
+    let (crumb, cookie) = ensure_auth(&auth).await?;
+    let result = fetch_quotes(&all_symbols, &crumb, &cookie).await;
+
+    let all_quotes = match result {
+        Ok(q) => q,
+        Err(_) => {
+            let (new_crumb, new_cookie) = refresh_auth(&auth).await?;
+            fetch_quotes(&all_symbols, &new_crumb, &new_cookie).await?
+        }
+    };
+
+    // Split into market quotes vs FX quotes
+    let mut market_quotes: Vec<MarketQuote> = Vec::new();
+    let mut fx_quotes: Vec<MarketQuote> = Vec::new();
+
+    for q in all_quotes {
+        if q.symbol.ends_with("PLN=X") {
+            fx_quotes.push(q);
+        } else {
+            market_quotes.push(q);
+        }
+    }
+
+    let fx_rates = parse_fx_rates(fx_quotes);
+
+    Ok(CombinedData { market_quotes, fx_rates })
 }
 
 async fn fetch_quotes(
@@ -234,6 +276,20 @@ async fn fetch_quotes(
     Ok(quotes)
 }
 
+/// Extract FX rates (relative to PLN) from a slice of quotes for FX pair symbols.
+fn parse_fx_rates(quotes: Vec<MarketQuote>) -> HashMap<String, f64> {
+    let mut rates: HashMap<String, f64> = HashMap::new();
+    rates.insert("PLN".to_string(), 1.0);
+    for q in quotes {
+        // Symbol is like "USDPLN=X" → currency code is "USD"
+        let currency = q.symbol.replace("PLN=X", "");
+        if !currency.is_empty() && q.price > 0.0 {
+            rates.insert(currency, q.price);
+        }
+    }
+    rates
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -274,7 +330,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::default().add_migrations("sqlite:portfolio.db", migrations).build())
-        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_fx_rates])
+        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_fx_rates, get_combined_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

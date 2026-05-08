@@ -7,8 +7,8 @@ import { SettingsPage } from "./views/SettingsPage";
 import { NAV_ITEMS } from "./config/navigation";
 import Database from "@tauri-apps/plugin-sql";
 import {
+  getCombinedDataRaw,
   getMarketDataRaw,
-  getFxRatesRaw,
   aggregateHoldings,
   calculatePortfolioValue,
   calculateTotalCost,
@@ -71,6 +71,9 @@ function App() {
   const fxRatesRef = useRef<FxRates>({ PLN: 1.0 });
   useEffect(() => { fxRatesRef.current = fxRates; }, [fxRates]);
 
+  // Prevents React 18 Strict Mode from double-firing the boot effect in dev
+  const hasInitialized = useRef(false);
+
   // ── Primitive helpers ────────────────────────────────────────────────────────
 
   /**
@@ -91,22 +94,7 @@ function App() {
     }
   };
 
-  /** Yahoo Call A — fetch FX rates, record stats */
-  const fetchFxRatesTracked = useCallback(async (): Promise<FxRates> => {
-    const t0 = Date.now();
-    try {
-      const rates = await getFxRatesRaw();
-      setApiStats(prev => applyCallResult(prev, true, Date.now() - t0));
-      return rates;
-    } catch (error) {
-      const msg = `[FX] ${String(error).slice(0, 120)}`;
-      setApiStats(prev => applyCallResult(prev, false, Date.now() - t0, msg));
-      console.error("Failed to fetch FX rates:", error);
-      return { PLN: 1.0 };
-    }
-  }, []);
-
-  /** Yahoo Call B — fetch market quotes for held symbols, record stats */
+  /** Yahoo Call B — fetch market quotes for held symbols, record stats (used after transaction changes). */
   const fetchMarketDataTracked = useCallback(async (
     symbols: string[]
   ): Promise<MarketQuote[]> => {
@@ -124,11 +112,47 @@ function App() {
     }
   }, []);
 
-  // ── Market data orchestration ─────────────────────────────────────────────────
+  /**
+   * Single combined Yahoo Finance call \u2014 fetches both ticker quotes and FX
+   * rates in one batch request. Records exactly 1 stat entry.
+   * Used on boot and force-refresh.
+   */
+  const fetchCombinedTracked = useCallback(async (
+    symbols: string[]
+  ): Promise<{ marketQuotes: MarketQuote[]; rates: FxRates }> => {
+    const t0 = Date.now();
+    try {
+      const data = await getCombinedDataRaw(symbols);
+      setApiStats(prev => applyCallResult(prev, true, Date.now() - t0));
+      return { marketQuotes: data.market_quotes, rates: data.fx_rates };
+    } catch (error) {
+      const msg = `[Combined] ${String(error).slice(0, 120)}`;
+      setApiStats(prev => applyCallResult(prev, false, Date.now() - t0, msg));
+      console.error("Failed to fetch combined data:", error);
+      return { marketQuotes: [], rates: { PLN: 1.0 } };
+    }
+  }, []);
+
+  const applyMarketData = useCallback((
+    txs: Transaction[],
+    marketQuotes: MarketQuote[],
+    rates: FxRates
+  ) => {
+    const currentHoldings = aggregateHoldings(txs);
+    setHoldings(currentHoldings);
+    setQuotes(marketQuotes);
+    if (currentHoldings.length === 0) {
+      setPortfolioValue(0);
+      setTotalCost(0);
+    } else {
+      setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));
+      setTotalCost(calculateTotalCost(currentHoldings, rates));
+    }
+  }, []);
 
   /**
-   * Given a transaction list and FX rates, aggregate holdings and make exactly
-   * ONE Yahoo Finance call for market quotes. Recomputes all derived values.
+   * Market-only reload (after a transaction change). Uses cached FX rates.
+   * Makes exactly 1 Yahoo call for ticker quotes.
    */
   const loadMarketData = useCallback(async (
     txs: Transaction[],
@@ -164,46 +188,60 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseCurrency]);
 
-  // ── Boot sequence ─────────────────────────────────────────────────────────────
+  // ── Boot sequence ─────────────────────────────────────────────────────────────────────
   //
-  //  On mount: 2 Yahoo calls, run in parallel:
-  //    Call A  →  FX rates
-  //    Call B  →  market quotes (after transactions + rates are known)
+  //  On mount: exactly 1 Yahoo call that fetches both FX rates and market
+  //  quotes in a single batch request.
+  //  The hasInitialized ref prevents React 18 Strict Mode from double-firing.
   //
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     const init = async () => {
-      // DB + FX fetch in parallel (DB is local, no Yahoo call)
-      const [txs, rates] = await Promise.all([
-        loadTransactions(),
-        fetchFxRatesTracked(),          // Yahoo Call A
-      ]);
-      setFxRates(rates);
-      await loadMarketData(txs, rates); // Yahoo Call B
+      const txs = await loadTransactions();
+      const symbols = Array.from(new Set(txs.map(t => t.symbol)));
+
+      setIsLoadingMarket(true);
+      try {
+        const { marketQuotes, rates } = await fetchCombinedTracked(symbols); // 1 Yahoo call
+        setFxRates(rates);
+        fxRatesRef.current = rates;
+        applyMarketData(txs, marketQuotes, rates);
+      } finally {
+        setIsLoadingMarket(false);
+      }
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Actions ───────────────────────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────────────────
 
   /**
    * Called after adding a transaction or resetting the portfolio.
-   * FX rates haven't changed → make only 1 Yahoo call (market data).
+   * FX rates are cached — make only 1 Yahoo call (market data only).
    */
   const handleDataChange = useCallback(async () => {
     const txs = await loadTransactions();            // DB only
-    await loadMarketData(txs, fxRatesRef.current);  // Yahoo Call B (market only)
+    await loadMarketData(txs, fxRatesRef.current);  // 1 Yahoo call (market only)
   }, [loadMarketData]);
 
-  /** Full refresh: 2 Yahoo calls in parallel, then market. */
+  /** Full refresh: 1 combined Yahoo call fetching FX + market in one batch. */
   const handleForceRefresh = useCallback(async () => {
-    const [txs, rates] = await Promise.all([
-      loadTransactions(),
-      fetchFxRatesTracked(),          // Yahoo Call A
-    ]);
-    setFxRates(rates);
-    await loadMarketData(txs, rates); // Yahoo Call B
-  }, [fetchFxRatesTracked, loadMarketData]);
+    const txs = await loadTransactions();
+    const symbols = Array.from(new Set(txs.map(t => t.symbol)));
+
+    setIsLoadingMarket(true);
+    try {
+      const { marketQuotes, rates } = await fetchCombinedTracked(symbols); // 1 Yahoo call
+      setFxRates(rates);
+      fxRatesRef.current = rates;
+      applyMarketData(txs, marketQuotes, rates);
+    } finally {
+      setIsLoadingMarket(false);
+    }
+  }, [fetchCombinedTracked, applyMarketData]);
 
   /** Persist and apply a new base currency (no Yahoo calls). */
   const handleBaseCurrencyChange = (currency: SupportedCurrency) => {
