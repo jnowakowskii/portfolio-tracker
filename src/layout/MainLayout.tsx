@@ -32,9 +32,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
             style={{ background: "#ffffff" }}
           >
-            <img src={logoUrl} alt="Portfolio logo" className="w-full h-full object-cover" />
+            <img src={logoUrl} alt="Callisto logo" className="w-full h-full object-cover" />
           </div>
-          <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Portfolio Tracker</span>
+          <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Callisto</span>
         </div>
 
         {topItems.map(item => (
