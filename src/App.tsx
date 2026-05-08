@@ -146,7 +146,7 @@ function App() {
 
     setIsLoadingMarket(true);
     try {
-      const symbols = currentHoldings.map(h => h.symbol);
+      const symbols = Array.from(new Set(txs.map(t => t.symbol)));
       const marketQuotes = await fetchMarketDataTracked(symbols); // 1 Yahoo call
       setQuotes(marketQuotes);
       setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));

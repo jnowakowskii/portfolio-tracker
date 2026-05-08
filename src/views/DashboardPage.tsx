@@ -97,6 +97,9 @@ export function DashboardPage({
               {transactions.map((tx) => {
                 const sym = CURRENCY_SYMBOLS[tx.currency] || tx.currency;
                 const isBuy = tx.side === "BUY";
+                const quote = quotes.find(q => q.symbol === tx.symbol);
+                const displayName = quote?.name ? `${quote.name} (${tx.symbol})` : tx.symbol;
+                
                 return (
                   <div
                     key={tx.id}
@@ -117,7 +120,7 @@ export function DashboardPage({
                         {isBuy ? "B" : "S"}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold font-mono" style={{ color: "#ffffff" }}>{tx.symbol}</div>
+                        <div className="text-sm font-semibold font-mono" style={{ color: "#ffffff" }}>{displayName}</div>
                         <div className="text-xs mt-0.5" style={{ color: "#525252" }}>
                           {new Date(tx.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                         </div>

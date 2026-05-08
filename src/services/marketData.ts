@@ -7,6 +7,7 @@ export interface MarketQuote {
   price: number;
   change_percent: number;
   currency: string;
+  name?: string;
 }
 
 export interface Transaction {

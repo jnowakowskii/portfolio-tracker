@@ -33,6 +33,8 @@ struct YahooQuote {
     regular_market_change_percent: Option<f64>,
     #[serde(default)]
     currency: Option<String>,
+    #[serde(rename = "shortName", default)]
+    short_name: Option<String>,
 }
 
 // ── Public return types ────────────────────────────────────────────────
@@ -43,6 +45,7 @@ pub struct MarketQuote {
     pub price: f64,
     pub change_percent: f64,
     pub currency: String,
+    pub name: Option<String>,
 }
 
 // ── Cookie + Crumb helpers ─────────────────────────────────────────────
@@ -224,6 +227,7 @@ async fn fetch_quotes(
             price: q.regular_market_price.unwrap_or(0.0),
             change_percent: q.regular_market_change_percent.unwrap_or(0.0),
             currency: q.currency.unwrap_or_else(|| "USD".to_string()),
+            name: q.short_name,
         })
         .collect();
 
