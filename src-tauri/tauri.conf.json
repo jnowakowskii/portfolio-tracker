@@ -15,7 +15,8 @@
         "title": "Portfolio Tracker",
         "width": 800,
         "height": 600,
-        "fullscreen": true
+        "fullscreen": true,
+        "theme": "Dark"
       }
     ],
     "security": {
