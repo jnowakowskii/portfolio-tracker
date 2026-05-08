@@ -4,6 +4,7 @@ import { AddTransactionModal } from "./components/ui/AddTransactionModal";
 import { DashboardPage } from "./views/DashboardPage";
 import { PlaceholderPage } from "./views/PlaceholderPage";
 import { SettingsPage } from "./views/SettingsPage";
+import { HistoryPage } from "./views/HistoryPage";
 import { NAV_ITEMS } from "./config/navigation";
 import Database from "@tauri-apps/plugin-sql";
 import {
@@ -52,6 +53,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editTransactionData, setEditTransactionData] = useState<Transaction | null>(null);
 
   // Market data
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
@@ -254,6 +256,22 @@ function App() {
     setApiStats(initialApiStats);
   }, []);
 
+  const handleEditTransaction = (tx: Transaction) => {
+    setEditTransactionData(tx);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTransaction = async (id: number) => {
+    try {
+      const db = await Database.load("sqlite:portfolio.db");
+      await db.execute("DELETE FROM transactions WHERE id = $1", [id]);
+      await handleDataChange();
+    } catch (error) {
+      console.error("Failed to delete transaction:", error);
+      alert("Failed to delete transaction.");
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────────
 
   const renderPage = () => {
@@ -282,6 +300,14 @@ function App() {
             onResetStats={handleResetStats}
           />
         );
+      case "history":
+        return (
+          <HistoryPage
+            transactions={transactions}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+          />
+        );
       default: {
         const navItem = NAV_ITEMS.find(item => item.id === activeTab);
         return <PlaceholderPage title={navItem?.label ?? activeTab} />;
@@ -301,8 +327,12 @@ function App() {
 
       <AddTransactionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditTransactionData(null);
+        }}
         onSave={handleDataChange}
+        editData={editTransactionData}
       />
     </>
   );

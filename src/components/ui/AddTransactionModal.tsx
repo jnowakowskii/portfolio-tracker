@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Database from "@tauri-apps/plugin-sql";
 import { X, Search, Hash, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
-import { SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../../services/marketData";
+import { Transaction, SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../../services/marketData";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
+  editData?: Transaction | null;
 }
 
 const inputBase: React.CSSProperties = {
@@ -36,13 +37,34 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionModalProps) {
+export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTransactionModalProps) {
   const [symbol, setSymbol] = useState("");
   const [side, setSide] = useState("BUY");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState<SupportedCurrency>("PLN");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        // Strip `.WA` from display symbol if the currency is PLN.
+        let displaySymbol = editData.symbol;
+        if (editData.currency === "PLN" && displaySymbol.endsWith(".WA")) {
+          displaySymbol = displaySymbol.replace(".WA", "");
+        }
+        setSymbol(displaySymbol);
+        setSide(editData.side);
+        setQuantity(editData.quantity.toString());
+        setPrice(editData.price.toString());
+        setCurrency(editData.currency as SupportedCurrency);
+        setDate(editData.date.split('T')[0]);
+      } else {
+        setSymbol(""); setSide("BUY"); setQuantity(""); setPrice(""); setCurrency("PLN");
+        setDate(new Date().toISOString().split('T')[0]);
+      }
+    }
+  }, [isOpen, editData]);
 
   if (!isOpen) return null;
 
@@ -63,13 +85,21 @@ export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionM
         alert("Please fill all required fields correctly.");
         return;
       }
-      await db.execute(
-        "INSERT INTO transactions (symbol, side, quantity, price, commission, date, currency) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-        [finalSymbol, side, qtyNum, priceNum, 0, new Date(date).toISOString(), currency]
-      );
-      setSymbol(""); setSide("BUY"); setQuantity(""); setPrice(""); setCurrency("PLN");
-      setDate(new Date().toISOString().split('T')[0]);
-      onSave(); onClose();
+
+      if (editData) {
+        await db.execute(
+          "UPDATE transactions SET symbol = $1, side = $2, quantity = $3, price = $4, commission = $5, date = $6, currency = $7 WHERE id = $8",
+          [finalSymbol, side, qtyNum, priceNum, 0, new Date(date).toISOString(), currency, editData.id]
+        );
+      } else {
+        await db.execute(
+          "INSERT INTO transactions (symbol, side, quantity, price, commission, date, currency) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          [finalSymbol, side, qtyNum, priceNum, 0, new Date(date).toISOString(), currency]
+        );
+      }
+      
+      onSave();
+      onClose();
     } catch (error) {
       console.error("Failed to add transaction:", error);
       alert("Failed to save transaction.");
@@ -96,7 +126,9 @@ export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionM
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
-          <h2 className="text-base font-semibold" style={{ color: "#ffffff" }}>Add Transaction</h2>
+          <h2 className="text-base font-semibold" style={{ color: "#ffffff" }}>
+            {editData ? "Edit Transaction" : "Add Transaction"}
+          </h2>
           <button
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
@@ -233,7 +265,7 @@ export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionM
               onMouseEnter={e => { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
             >
-              Save Transaction
+              {editData ? "Save Changes" : "Save Transaction"}
             </button>
           </div>
         </form>
