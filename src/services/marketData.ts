@@ -52,44 +52,10 @@ export interface CombinedData {
 
 // ── API ────────────────────────────────────────────────────────────────
 
-/**
- * Fetch live market data for the given symbols via the Rust backend.
- * Returns an empty array if the API is unavailable or symbols is empty.
- */
-export async function getMarketData(symbols: string[]): Promise<MarketQuote[]> {
-  if (symbols.length === 0) return [];
-  try {
-    const quotes = await invoke<MarketQuote[]>("get_market_data", { symbols });
-    return quotes;
-  } catch (error) {
-    console.error("Failed to fetch market data:", error);
-    return [];
-  }
-}
-
 /** Like getMarketData but throws on error — used by App for diagnostics tracking. */
 export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]> {
   if (symbols.length === 0) return [];
   return invoke<MarketQuote[]>("get_market_data", { symbols });
-}
-
-/**
- * Fetch FX rates relative to PLN from the Rust backend.
- * Returns at minimum { PLN: 1.0 } even on failure.
- */
-export async function getFxRates(): Promise<FxRates> {
-  try {
-    const rates = await invoke<FxRates>("get_fx_rates");
-    return rates;
-  } catch (error) {
-    console.error("Failed to fetch FX rates:", error);
-    return { PLN: 1.0 };
-  }
-}
-
-/** Like getFxRates but throws on error — used by App for diagnostics tracking. */
-export async function getFxRatesRaw(): Promise<FxRates> {
-  return invoke<FxRates>("get_fx_rates");
 }
 
 /**

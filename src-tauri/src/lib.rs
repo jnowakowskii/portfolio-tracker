@@ -157,30 +157,6 @@ async fn get_market_data(
     }
 }
 
-#[tauri::command]
-async fn get_fx_rates(
-    auth: State<'_, YahooAuth>,
-) -> Result<HashMap<String, f64>, String> {
-    // Fetch FX pairs relative to PLN
-    let fx_symbols = vec![
-        "USDPLN=X".to_string(),
-        "EURPLN=X".to_string(),
-        "GBPPLN=X".to_string(),
-    ];
-
-    let (crumb, cookie) = ensure_auth(&auth).await?;
-    let result = fetch_quotes(&fx_symbols, &crumb, &cookie).await;
-
-    let quotes = match result {
-        Ok(q) => q,
-        Err(_) => {
-            let (new_crumb, new_cookie) = refresh_auth(&auth).await?;
-            fetch_quotes(&fx_symbols, &new_crumb, &new_cookie).await?
-        }
-    };
-
-    Ok(parse_fx_rates(quotes))
-}
 
 /// Single-batch command: fetches user ticker symbols AND FX pairs in one HTTP
 /// request, returns them pre-split so the frontend needs exactly one Yahoo call.
@@ -330,7 +306,7 @@ pub fn run() {
         })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::default().add_migrations("sqlite:portfolio.db", migrations).build())
-        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_fx_rates, get_combined_data])
+        .invoke_handler(tauri::generate_handler![greet, get_market_data, get_combined_data])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
