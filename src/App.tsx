@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MainLayout } from "./layout/MainLayout";
 import { AddTransactionModal } from "./components/ui/AddTransactionModal";
 import { DashboardPage } from "./views/DashboardPage";
@@ -7,8 +7,8 @@ import { SettingsPage } from "./views/SettingsPage";
 import { NAV_ITEMS } from "./config/navigation";
 import Database from "@tauri-apps/plugin-sql";
 import {
-  getMarketData,
-  getFxRates,
+  getMarketDataRaw,
+  getFxRatesRaw,
   aggregateHoldings,
   calculatePortfolioValue,
   calculateTotalCost,
@@ -18,13 +18,42 @@ import {
   type FxRates,
   type SupportedCurrency,
 } from "./services/marketData";
+import { type ApiStat, initialApiStats } from "./types/apiStats";
+
+// ── Stat helper ───────────────────────────────────────────────────────────────
+
+function applyCallResult(
+  prev: ApiStat,
+  success: boolean,
+  latencyMs: number,
+  errorMsg?: string
+): ApiStat {
+  const newTotal = prev.totalRequests + 1;
+  const newAvg =
+    prev.totalRequests === 0
+      ? latencyMs
+      : Math.round((prev.avgLatencyMs * prev.totalRequests + latencyMs) / newTotal);
+  return {
+    totalRequests: newTotal,
+    successfulCalls: success ? prev.successfulCalls + 1 : prev.successfulCalls,
+    failedCalls: success ? prev.failedCalls : prev.failedCalls + 1,
+    lastFetchTime: success ? new Date() : prev.lastFetchTime,
+    avgLatencyMs: newAvg,
+    errors: errorMsg
+      ? [{ message: errorMsg, time: new Date() }, ...prev.errors].slice(0, 3)
+      : prev.errors,
+    yahooStatus: success ? "online" : "error",
+  };
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
 
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Market data state
+  // Market data
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
   const [quotes, setQuotes] = useState<MarketQuote[]>([]);
   const [fxRates, setFxRates] = useState<FxRates>({ PLN: 1.0 });
@@ -35,17 +64,76 @@ function App() {
   const [totalCost, setTotalCost] = useState(0);
   const [isLoadingMarket, setIsLoadingMarket] = useState(false);
 
-  const loadTransactions = async () => {
+  // API diagnostics
+  const [apiStats, setApiStats] = useState<ApiStat>(initialApiStats);
+
+  // Stable ref so callbacks always see the latest fxRates without creating stale closures
+  const fxRatesRef = useRef<FxRates>({ PLN: 1.0 });
+  useEffect(() => { fxRatesRef.current = fxRates; }, [fxRates]);
+
+  // ── Primitive helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Load all transactions from SQLite. Returns the loaded array so callers can
+   * pass it directly to loadMarketData without waiting for React state to settle.
+   */
+  const loadTransactions = async (): Promise<Transaction[]> => {
     try {
       const db = await Database.load("sqlite:portfolio.db");
-      const result = await db.select<Transaction[]>("SELECT * FROM transactions ORDER BY id DESC");
+      const result = await db.select<Transaction[]>(
+        "SELECT * FROM transactions ORDER BY id DESC"
+      );
       setTransactions(result);
+      return result;
     } catch (error) {
       console.error("Failed to load transactions:", error);
+      return [];
     }
   };
 
-  const loadMarketData = useCallback(async (txs: Transaction[], rates: FxRates) => {
+  /** Yahoo Call A — fetch FX rates, record stats */
+  const fetchFxRatesTracked = useCallback(async (): Promise<FxRates> => {
+    const t0 = Date.now();
+    try {
+      const rates = await getFxRatesRaw();
+      setApiStats(prev => applyCallResult(prev, true, Date.now() - t0));
+      return rates;
+    } catch (error) {
+      const msg = `[FX] ${String(error).slice(0, 120)}`;
+      setApiStats(prev => applyCallResult(prev, false, Date.now() - t0, msg));
+      console.error("Failed to fetch FX rates:", error);
+      return { PLN: 1.0 };
+    }
+  }, []);
+
+  /** Yahoo Call B — fetch market quotes for held symbols, record stats */
+  const fetchMarketDataTracked = useCallback(async (
+    symbols: string[]
+  ): Promise<MarketQuote[]> => {
+    if (symbols.length === 0) return [];
+    const t0 = Date.now();
+    try {
+      const data = await getMarketDataRaw(symbols);
+      setApiStats(prev => applyCallResult(prev, true, Date.now() - t0));
+      return data;
+    } catch (error) {
+      const msg = `[Market] ${String(error).slice(0, 120)}`;
+      setApiStats(prev => applyCallResult(prev, false, Date.now() - t0, msg));
+      console.error("Failed to fetch market data:", error);
+      return [];
+    }
+  }, []);
+
+  // ── Market data orchestration ─────────────────────────────────────────────────
+
+  /**
+   * Given a transaction list and FX rates, aggregate holdings and make exactly
+   * ONE Yahoo Finance call for market quotes. Recomputes all derived values.
+   */
+  const loadMarketData = useCallback(async (
+    txs: Transaction[],
+    rates: FxRates
+  ) => {
     const currentHoldings = aggregateHoldings(txs);
     setHoldings(currentHoldings);
 
@@ -59,58 +147,77 @@ function App() {
     setIsLoadingMarket(true);
     try {
       const symbols = currentHoldings.map(h => h.symbol);
-      const marketQuotes = await getMarketData(symbols);
+      const marketQuotes = await fetchMarketDataTracked(symbols); // 1 Yahoo call
       setQuotes(marketQuotes);
       setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));
       setTotalCost(calculateTotalCost(currentHoldings, rates));
-    } catch (error) {
-      console.error("Failed to fetch market data:", error);
     } finally {
       setIsLoadingMarket(false);
     }
-  }, []);
+  }, [fetchMarketDataTracked]);
 
-  // When baseCurrency changes, recompute derived values from cached data
+  // When baseCurrency changes, recalculate from cached data — NO Yahoo calls
   useEffect(() => {
     if (holdings.length === 0 || quotes.length === 0) return;
     setPortfolioValue(calculatePortfolioValue(holdings, quotes, fxRates));
     setTotalCost(calculateTotalCost(holdings, fxRates));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseCurrency]);
 
-
-  // Load FX rates and transactions on mount
+  // ── Boot sequence ─────────────────────────────────────────────────────────────
+  //
+  //  On mount: 2 Yahoo calls, run in parallel:
+  //    Call A  →  FX rates
+  //    Call B  →  market quotes (after transactions + rates are known)
+  //
   useEffect(() => {
     const init = async () => {
-      const [, rates] = await Promise.all([
+      // DB + FX fetch in parallel (DB is local, no Yahoo call)
+      const [txs, rates] = await Promise.all([
         loadTransactions(),
-        getFxRates(),
+        fetchFxRatesTracked(),          // Yahoo Call A
       ]);
       setFxRates(rates);
+      await loadMarketData(txs, rates); // Yahoo Call B
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch market data whenever transactions or FX rates change
-  useEffect(() => {
-    loadMarketData(transactions, fxRates);
-  }, [transactions, fxRates, loadMarketData]);
+  // ── Actions ───────────────────────────────────────────────────────────────────
 
-  /** Persist and apply a new base currency selection */
+  /**
+   * Called after adding a transaction or resetting the portfolio.
+   * FX rates haven't changed → make only 1 Yahoo call (market data).
+   */
+  const handleDataChange = useCallback(async () => {
+    const txs = await loadTransactions();            // DB only
+    await loadMarketData(txs, fxRatesRef.current);  // Yahoo Call B (market only)
+  }, [loadMarketData]);
+
+  /** Full refresh: 2 Yahoo calls in parallel, then market. */
+  const handleForceRefresh = useCallback(async () => {
+    const [txs, rates] = await Promise.all([
+      loadTransactions(),
+      fetchFxRatesTracked(),          // Yahoo Call A
+    ]);
+    setFxRates(rates);
+    await loadMarketData(txs, rates); // Yahoo Call B
+  }, [fetchFxRatesTracked, loadMarketData]);
+
+  /** Persist and apply a new base currency (no Yahoo calls). */
   const handleBaseCurrencyChange = (currency: SupportedCurrency) => {
     localStorage.setItem("baseCurrency", currency);
     setBaseCurrency(currency);
   };
 
-  /** Called after adding a transaction or resetting portfolio */
-  const handleDataChange = async () => {
-    await loadTransactions();
-    // Also refresh FX rates
-    const rates = await getFxRates();
-    setFxRates(rates);
-  };
+  /** Reset all API diagnostic counters. */
+  const handleResetStats = useCallback(() => {
+    setApiStats(initialApiStats);
+  }, []);
 
-  /** Render the active page based on the current tab */
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   const renderPage = () => {
     switch (activeTab) {
       case "dashboard":
@@ -132,6 +239,9 @@ function App() {
             onPortfolioReset={handleDataChange}
             baseCurrency={baseCurrency}
             onBaseCurrencyChange={handleBaseCurrencyChange}
+            apiStats={apiStats}
+            onForceRefresh={handleForceRefresh}
+            onResetStats={handleResetStats}
           />
         );
       default: {
@@ -143,7 +253,11 @@ function App() {
 
   return (
     <>
-      <MainLayout activeTab={activeTab} setActiveTab={setActiveTab} onAddTransactionClick={() => setIsModalOpen(true)}>
+      <MainLayout
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onAddTransactionClick={() => setIsModalOpen(true)}
+      >
         {renderPage()}
       </MainLayout>
 

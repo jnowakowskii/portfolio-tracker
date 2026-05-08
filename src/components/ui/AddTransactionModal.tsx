@@ -52,13 +52,20 @@ export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionM
       const db = await Database.load("sqlite:portfolio.db");
       const qtyNum = parseFloat(quantity);
       const priceNum = parseFloat(price);
-      if (!symbol || isNaN(qtyNum) || isNaN(priceNum) || !date) {
+
+      // Auto-append .WA for Polish stocks if no suffix is provided
+      let finalSymbol = symbol.trim().toUpperCase();
+      if (currency === "PLN" && !finalSymbol.includes(".")) {
+        finalSymbol += ".WA";
+      }
+
+      if (!finalSymbol || isNaN(qtyNum) || isNaN(priceNum) || !date) {
         alert("Please fill all required fields correctly.");
         return;
       }
       await db.execute(
         "INSERT INTO transactions (symbol, side, quantity, price, commission, date, currency) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-        [symbol.toUpperCase(), side, qtyNum, priceNum, 0, new Date(date).toISOString(), currency]
+        [finalSymbol, side, qtyNum, priceNum, 0, new Date(date).toISOString(), currency]
       );
       setSymbol(""); setSide("BUY"); setQuantity(""); setPrice(""); setCurrency("PLN");
       setDate(new Date().toISOString().split('T')[0]);
@@ -112,7 +119,7 @@ export function AddTransactionModal({ isOpen, onClose, onSave }: AddTransactionM
                 type="text"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="AAPL"
+                placeholder="TICKER"
                 style={{ ...inputBase }}
                 onFocus={handleFocus}
                 onBlur={handleBlur}

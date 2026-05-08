@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity } from "lucide-react";
 import Database from "@tauri-apps/plugin-sql";
 import { SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../services/marketData";
+import { type ApiStat } from "../types/apiStats";
 
 interface SettingsPageProps {
   onPortfolioReset?: () => void;
   baseCurrency: SupportedCurrency;
   onBaseCurrencyChange: (currency: SupportedCurrency) => void;
+  apiStats: ApiStat;
+  onForceRefresh: () => Promise<void>;
+  onResetStats: () => void;
 }
 
 type ResetStep = "idle" | "confirm-text" | "final-warning";
@@ -23,10 +27,39 @@ const panelHeader: React.CSSProperties = {
   borderBottom: "1px solid #262626",
 };
 
-export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyChange }: SettingsPageProps) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function StatRow({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: "1px solid #1f1f1f" }}>
+      <span className="text-xs" style={{ color: "#737373" }}>{label}</span>
+      <span className={`text-xs font-semibold ${mono ? "font-mono" : ""}`} style={{ color: "#e5e5e5" }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function formatTime(date: Date | null): string {
+  if (!date) return "—";
+  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
+export function SettingsPage({
+  onPortfolioReset,
+  baseCurrency,
+  onBaseCurrencyChange,
+  apiStats,
+  onForceRefresh,
+  onResetStats,
+}: SettingsPageProps) {
   const [resetStep, setResetStep] = useState<ResetStep>("idle");
   const [confirmInput, setConfirmInput] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleResetClick = () => { setResetStep("confirm-text"); setConfirmInput(""); };
   const handleConfirmText = () => { if (confirmInput === "CONFIRM") setResetStep("final-warning"); };
@@ -47,13 +80,34 @@ export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyCha
     }
   };
 
+  const handleForceRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await onForceRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const statusColor = apiStats.yahooStatus === "online"
+    ? "#10b981"
+    : apiStats.yahooStatus === "error"
+      ? "#f43f5e"
+      : "#737373";
+
+  const statusLabel = apiStats.yahooStatus === "online"
+    ? "Online"
+    : apiStats.yahooStatus === "error"
+      ? "Error"
+      : "Unknown";
+
   return (
     <div className="flex items-start justify-center min-h-full py-4">
       <div className="space-y-6 w-full max-w-2xl">
 
         <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Settings</h1>
 
-        {/* General */}
+        {/* ── General ─────────────────────────────────────────────────────── */}
         <div style={panel}>
           <div style={panelHeader}>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>General</span>
@@ -81,14 +135,115 @@ export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyCha
           </div>
         </div>
 
-        {/* Danger Zone */}
+        {/* ── API & System Diagnostics (Accordion) ─────────────────────────── */}
+        <div style={panel}>
+          {/* Accordion Header */}
+          <button
+            className="w-full flex items-center justify-between px-6 py-4 transition-colors"
+            style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "none" }}
+            onClick={() => setDiagnosticsOpen(o => !o)}
+            onMouseEnter={e => (e.currentTarget.style.background = "#1c1c1c")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
+            <div className="flex items-center gap-2.5">
+              <Activity size={15} style={{ color: "#737373" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+                API & System Diagnostics
+              </span>
+            </div>
+            <ChevronDown
+              size={16}
+              style={{
+                color: "#525252",
+                transform: diagnosticsOpen ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+              }}
+            />
+          </button>
+
+          {/* Accordion Body */}
+          <div
+            style={{
+              maxHeight: diagnosticsOpen ? "600px" : "0px",
+              overflow: "hidden",
+              transition: "max-height 0.3s ease",
+            }}
+          >
+            <div className="px-6 py-5 space-y-5">
+
+              {/* Stats Grid */}
+              <div>
+                <StatRow
+                  label="Yahoo Finance Status"
+                  mono={false}
+                  value={
+                    <span className="flex items-center gap-1.5">
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor, display: "inline-block" }} />
+                      {statusLabel}
+                    </span>
+                  }
+                />
+                <StatRow label="Total Requests" value={apiStats.totalRequests} />
+                <StatRow label="Successful Calls" value={<span style={{ color: "#10b981" }}>{apiStats.successfulCalls}</span>} />
+                <StatRow label="Failed Calls" value={<span style={{ color: apiStats.failedCalls > 0 ? "#f43f5e" : "#737373" }}>{apiStats.failedCalls}</span>} />
+                <StatRow label="Average Latency" value={apiStats.totalRequests === 0 ? "—" : `${apiStats.avgLatencyMs} ms`} />
+                <StatRow label="Last Update" value={formatTime(apiStats.lastFetchTime)} />
+              </div>
+
+              {/* Error Log */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#525252" }}>Error Log (last 3)</p>
+                <div
+                  className="rounded-lg p-3 space-y-1.5 overflow-y-auto"
+                  style={{ background: "#0a0a0a", border: "1px solid #262626", maxHeight: "100px", minHeight: "52px" }}
+                >
+                  {apiStats.errors.length === 0 ? (
+                    <p className="text-xs font-mono" style={{ color: "#404040" }}>No errors recorded.</p>
+                  ) : (
+                    apiStats.errors.map((e, i) => (
+                      <div key={i} className="flex gap-2 text-xs font-mono leading-snug">
+                        <span style={{ color: "#525252", shrink: 0 } as React.CSSProperties}>[{formatTime(e.time)}]</span>
+                        <span style={{ color: "#f43f5e", wordBreak: "break-all" }}>{e.message}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={onResetStats}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#a3a3a3" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "#404040"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.borderColor = "#262626"; }}
+                >
+                  <RotateCcw size={13} />
+                  Clear Stats
+                </button>
+                <button
+                  onClick={handleForceRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  style={{ background: "#ffffff", border: "1px solid #ffffff", color: "#0a0a0a" }}
+                  onMouseEnter={e => { if (!isRefreshing) { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
+                >
+                  <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
+                  {isRefreshing ? "Refreshing…" : "Refresh Data"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Danger Zone ─────────────────────────────────────────────────── */}
         <div style={{ ...panel, border: "1px solid #2d1515" }}>
           <div style={{ ...panelHeader, borderBottom: "1px solid #2d1515", background: "rgba(220,38,38,0.04)" }}>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#ef4444" }}>Danger Zone</span>
           </div>
           <div className="px-6 py-5 space-y-5">
-
-            {/* Reset row */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Reset Portfolio</p>
@@ -107,7 +262,6 @@ export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyCha
               )}
             </div>
 
-            {/* Step 1: Type CONFIRM */}
             {resetStep === "confirm-text" && (
               <div className="p-4 rounded-lg space-y-4" style={{ background: "#1a1400", border: "1px solid rgba(234,179,8,0.2)" }}>
                 <p className="text-xs font-semibold" style={{ color: "#eab308" }}>⚠ Warning: Destructive Action</p>
@@ -146,7 +300,6 @@ export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyCha
               </div>
             )}
 
-            {/* Step 2: Final warning */}
             {resetStep === "final-warning" && (
               <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}>
                 <p className="text-xs font-semibold" style={{ color: "#ef4444" }}>Are you absolutely sure?</p>
@@ -178,7 +331,6 @@ export function SettingsPage({ onPortfolioReset, baseCurrency, onBaseCurrencyCha
                 </div>
               </div>
             )}
-
           </div>
         </div>
 

@@ -51,7 +51,6 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
  */
 export async function getMarketData(symbols: string[]): Promise<MarketQuote[]> {
   if (symbols.length === 0) return [];
-
   try {
     const quotes = await invoke<MarketQuote[]>("get_market_data", { symbols });
     return quotes;
@@ -59,6 +58,12 @@ export async function getMarketData(symbols: string[]): Promise<MarketQuote[]> {
     console.error("Failed to fetch market data:", error);
     return [];
   }
+}
+
+/** Like getMarketData but throws on error — used by App for diagnostics tracking. */
+export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]> {
+  if (symbols.length === 0) return [];
+  return invoke<MarketQuote[]>("get_market_data", { symbols });
 }
 
 /**
@@ -74,6 +79,12 @@ export async function getFxRates(): Promise<FxRates> {
     return { PLN: 1.0 };
   }
 }
+
+/** Like getFxRates but throws on error — used by App for diagnostics tracking. */
+export async function getFxRatesRaw(): Promise<FxRates> {
+  return invoke<FxRates>("get_fx_rates");
+}
+
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -131,7 +142,7 @@ export function calculatePortfolioValue(
 
 /**
  * Calculate total cost basis of current holdings in PLN.
- * Each holding's cost is in its native currency, converted via FX rates.
+ * Each holding's cost is in its native transaction currency, converted to PLN via FX rates.
  */
 export function calculateTotalCost(
   holdings: PortfolioHolding[],
