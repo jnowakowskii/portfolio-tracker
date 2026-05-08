@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Database from "@tauri-apps/plugin-sql";
-import { X, Search, Hash, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { X, Search, Hash, Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Transaction, SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../../services/marketData";
 
 interface AddTransactionModalProps {
@@ -33,6 +33,139 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    return date ? new Date(date) : new Date();
+  });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  
+  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday start
+  
+  const days = [];
+  for (let i = 0; i < startOffset; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const handlePrevMonth = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+  const handleNextMonth = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const zeroPad = (num: number) => num.toString().padStart(2, '0');
+  const formatISO = (y: number, m: number, d: number) => `${y}-${zeroPad(m + 1)}-${zeroPad(d)}`;
+
+  const handleSelectDate = (day: number) => {
+    onChange(formatISO(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+    setIsOpen(false);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.border = "1px solid #525252";
+  };
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.border = "1px solid #262626";
+  };
+
+  const today = new Date();
+  const todayISO = formatISO(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <CalendarIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252", zIndex: 10 }} />
+      <input
+        type="text"
+        readOnly
+        value={date}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ ...inputBase, cursor: "pointer" }}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        required
+      />
+      
+      {isOpen && (
+        <div 
+          className="absolute z-50 mt-2 p-4 rounded-xl shadow-2xl" 
+          style={{ 
+            background: "#171717", 
+            border: "1px solid #262626",
+            width: "280px",
+            left: "0",
+            top: "100%"
+          }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={handlePrevMonth} className="p-1 rounded-md hover:bg-[#262626] text-[#a3a3a3] hover:text-white transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <div className="text-sm font-semibold text-white">
+              {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </div>
+            <button onClick={handleNextMonth} className="p-1 rounded-md hover:bg-[#262626] text-[#a3a3a3] hover:text-white transition-colors">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+              <div key={d} className="text-center text-xs font-semibold text-[#525252]">
+                {d}
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-7 gap-1">
+            {days.map((day, i) => {
+              if (day === null) return <div key={`empty-${i}`} />;
+              
+              const dISO = formatISO(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+              const isSelected = date === dISO;
+              const isToday = todayISO === dISO;
+              
+              return (
+                <button
+                  key={i}
+                  onClick={(e) => { e.preventDefault(); handleSelectDate(day); }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-md text-sm transition-colors ${
+                    isSelected 
+                      ? 'bg-white text-black font-bold' 
+                      : isToday 
+                        ? 'border border-[#525252] text-white font-medium' 
+                        : 'text-[#a3a3a3] hover:bg-[#262626] hover:text-white'
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -121,7 +254,7 @@ export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTr
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
     >
       <div
-        className="w-full max-w-md rounded-xl overflow-hidden"
+        className="w-full max-w-md rounded-xl"
         style={{ background: "#171717", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
       >
         {/* Header */}
@@ -234,16 +367,7 @@ export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTr
 
           {/* Date */}
           <Field label="Date">
-            <div className="relative">
-              <CalendarIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
-              <input type="date" value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{ ...inputBase }}
-                onFocus={handleFocus} onBlur={handleBlur}
-                className="[&::-webkit-calendar-picker-indicator]:opacity-30 [&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
-                required
-              />
-            </div>
+            <CustomDatePicker date={date} onChange={setDate} />
           </Field>
 
           {/* Actions */}
