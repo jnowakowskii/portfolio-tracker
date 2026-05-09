@@ -102,8 +102,8 @@ export function SettingsPage({
       : "Unknown";
 
   return (
-    <div className="flex items-start justify-center min-h-full py-4">
-      <div className="space-y-6 w-full max-w-2xl">
+    <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
+      <div className="w-full max-w-2xl space-y-6 flex-1">
 
         <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Settings</h1>
 
@@ -333,8 +333,16 @@ export function SettingsPage({
             )}
           </div>
         </div>
-
       </div>
+
+      <div className="w-full max-w-2xl pt-12 pb-2 text-center mt-auto">
+        <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "#3f3f3fff" }}>
+          Callisto Beta v0.1<br /><br />
+          © 2026 jakubnowakowski.com<br />
+          Data via Yahoo Finance
+        </p>
+      </div>
+
     </div>
   );
 }
