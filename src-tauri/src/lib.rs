@@ -48,6 +48,20 @@ pub struct MarketQuote {
     pub name: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SymbolSearchResult {
+    pub symbol: String,
+    pub shortname: Option<String>,
+    pub exchange: Option<String>,
+    #[serde(rename = "quoteType")]
+    pub quote_type: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooSearchResponse {
+    quotes: Vec<SymbolSearchResult>,
+}
+
 /// Combined response for a single-batch boot/refresh call.
 /// Contains market quotes for user tickers and FX rates in one Yahoo request.
 #[derive(Debug, Serialize, Clone)]
@@ -255,6 +269,40 @@ async fn fetch_quotes(
     Ok(quotes)
 }
 
+#[tauri::command]
+async fn search_symbols(query: String) -> Result<Vec<SymbolSearchResult>, String> {
+    if query.trim().is_empty() {
+        return Ok(vec![]);
+    }
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get("https://query2.finance.yahoo.com/v1/finance/search")
+        .query(&[
+            ("q", query.as_str()),
+            ("quotesCount", "6"),
+            ("newsCount", "0"),
+        ])
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Yahoo API returned status {}", response.status()));
+    }
+
+    let data: YahooSearchResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse API response: {}", e))?;
+
+    Ok(data.quotes)
+}
+
 /// Extract FX rates (relative to PLN) from a slice of quotes for FX pair symbols.
 fn parse_fx_rates(quotes: Vec<MarketQuote>) -> HashMap<String, f64> {
     let mut rates: HashMap<String, f64> = HashMap::new();
@@ -307,7 +355,7 @@ pub fn run() {
                 .add_migrations("sqlite:portfolio.db", migrations)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data])
+        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data, search_symbols])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

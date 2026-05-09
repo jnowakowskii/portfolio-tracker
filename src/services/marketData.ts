@@ -10,6 +10,13 @@ export interface MarketQuote {
   name?: string;
 }
 
+export interface SymbolSearchResult {
+  symbol: string;
+  shortname?: string;
+  exchange?: string;
+  quoteType?: string;
+}
+
 export interface Transaction {
   id: number;
   symbol: string;
@@ -65,6 +72,11 @@ export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]
  */
 export async function getCombinedDataRaw(symbols: string[]): Promise<CombinedData> {
   return invoke<CombinedData>("get_combined_data", { symbols });
+}
+
+export async function searchSymbols(query: string): Promise<SymbolSearchResult[]> {
+  if (!query.trim()) return [];
+  return invoke<SymbolSearchResult[]>("search_symbols", { query });
 }
 
 
