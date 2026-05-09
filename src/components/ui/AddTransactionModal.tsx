@@ -393,7 +393,7 @@ export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTr
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 pb-40 space-y-5 max-h-[85vh] overflow-y-auto">
 
           {/* Symbol */}
           <Field label="Symbol">

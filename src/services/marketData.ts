@@ -101,8 +101,9 @@ export function aggregateHoldings(transactions: Transaction[]): PortfolioHolding
       existing.quantity += tx.quantity;
       existing.totalCost += tx.quantity * tx.price + tx.commission;
     } else {
+      const avgCost = existing.quantity > 0 ? existing.totalCost / existing.quantity : 0;
       existing.quantity -= tx.quantity;
-      existing.totalCost -= tx.quantity * tx.price - tx.commission;
+      existing.totalCost -= avgCost * tx.quantity;
     }
 
     map.set(tx.symbol, existing);
