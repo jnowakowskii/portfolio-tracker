@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { MainLayout } from "./layout/MainLayout";
 import { AddTransactionModal } from "./components/ui/AddTransactionModal";
 import { DashboardPage } from "./views/DashboardPage";
+import { AllocationPage } from "./views/AllocationPage";
 import { PlaceholderPage } from "./views/PlaceholderPage";
 import { SettingsPage } from "./views/SettingsPage";
 import { HistoryPage } from "./views/HistoryPage";
@@ -287,6 +288,15 @@ function App() {
             portfolioValue={portfolioValue}
             totalCost={totalCost}
             isLoadingMarket={isLoadingMarket}
+          />
+        );
+      case "allocation":
+        return (
+          <AllocationPage
+            holdings={holdings}
+            quotes={quotes}
+            fxRates={fxRates}
+            baseCurrency={baseCurrency}
           />
         );
       case "settings":
