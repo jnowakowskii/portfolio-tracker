@@ -337,7 +337,7 @@ export function SettingsPage({
 
       <div className="w-full max-w-2xl pt-12 pb-2 text-center mt-auto">
         <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "#3f3f3fff" }}>
-          Callisto Beta v0.1<br /><br />
+          Callisto Beta v0.2<br /><br />
           © 2026 jakubnowakowski.com<br />
           Data via Yahoo Finance
         </p>
