@@ -1,4 +1,4 @@
-import { Wallet, TrendingUp, PieChart, Activity } from "lucide-react";
+import { Wallet, ChartCandlestick, PieChart, Activity } from "lucide-react";
 import { SummaryCard } from "../components/ui/SummaryCard";
 import { CURRENCY_SYMBOLS, type MarketQuote, type PortfolioHolding, type Transaction, type FxRates, type SupportedCurrency } from "../services/marketData";
 
@@ -56,7 +56,7 @@ export function DashboardPage({
         <SummaryCard title={`Total Value (${baseCurrency})`} value={displayValue}
           change={displayChange} isPositive={weightedDailyChange >= 0} icon={<Wallet size={18} />} />
         <SummaryCard title="Open Positions" value={holdings.length.toString()}
-          change={`${quotes.length} priced`} isPositive={true} icon={<TrendingUp size={18} />} />
+          change={`${quotes.length} priced in`} isPositive={true} icon={<ChartCandlestick size={18} />} changeIcon={<ChartCandlestick size={12} />} />
         <SummaryCard title={`Unrealized P/L (${baseCurrency})`} value={displayPL}
           change={displayPLPct} isPositive={unrealizedPL >= 0} icon={<PieChart size={18} />} />
       </div>

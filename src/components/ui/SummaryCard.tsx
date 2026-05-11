@@ -7,9 +7,10 @@ interface SummaryCardProps {
   change: string;
   isPositive: boolean;
   icon: ReactNode;
+  changeIcon?: ReactNode;
 }
 
-export function SummaryCard({ title, value, change, isPositive, icon }: SummaryCardProps) {
+export function SummaryCard({ title, value, change, isPositive, icon, changeIcon }: SummaryCardProps) {
   return (
     <div
       className="relative p-6 rounded-xl transition-colors duration-200"
@@ -33,7 +34,7 @@ export function SummaryCard({ title, value, change, isPositive, icon }: SummaryC
           : { background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.12)" }
         }
       >
-        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        {changeIcon !== undefined ? changeIcon : (isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />)}
         {change}
       </span>
     </div>
