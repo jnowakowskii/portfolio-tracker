@@ -52,6 +52,12 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
       }
       return {
         name: h.symbol,
+        symbol: h.symbol,
+        stockName: quote?.name || h.symbol,
+        price: quote?.price || 0,
+        priceCurrency: quote?.currency || h.currency,
+        avgCost: h.quantity > 0 ? h.totalCost / h.quantity : 0,
+        costCurrency: h.currency,
         value: valueBase,
       };
     }).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
@@ -64,8 +70,16 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
   if (holdings.length === 0) {
     return (
       <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
-        <div className="w-full max-w-2xl space-y-6 flex-1 flex flex-col">
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+        <div className="w-full max-w-6xl space-y-6 flex-1 flex flex-col">
+          <div className="flex items-end justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
+              <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
+                0.00 <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+              </span>
+            </div>
+          </div>
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#262626" }}>
               <PieChartIcon size={22} style={{ color: "#525252" }} />
@@ -129,24 +143,32 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
 
   return (
     <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
-      <div className="w-full max-w-2xl space-y-6 flex-1">
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+      <div className="w-full max-w-6xl space-y-6 flex-1">
+        <div className="flex items-end justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+          <div className="flex flex-col items-end">
+            <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
+            <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
+              {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+            </span>
+          </div>
+        </div>
 
         <div style={panel}>
           <div style={panelHeader}>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
-              Holdings
+            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+              Holdings by ticker
             </span>
           </div>
-          <div className="p-6 flex-1 flex flex-col justify-center min-h-[360px]">
-            <ResponsiveContainer width="100%" height={320}>
+          <div className="p-6 flex-1 flex flex-col justify-center min-h-[460px]">
+            <ResponsiveContainer width="100%" height={420}>
               <PieChart>
                 <Pie
                   data={holdingsData}
                   cx="50%"
                   cy="45%"
-                  innerRadius={75}
-                  outerRadius={110}
+                  innerRadius={110}
+                  outerRadius={160}
                   paddingAngle={2}
                   dataKey="value"
                   stroke="#171717"
@@ -161,6 +183,61 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
                 <Legend content={renderLegend} verticalAlign="bottom" />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div style={panel}>
+          <div style={panelHeader}>
+            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+              Assets Breakdown
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-[#262626] text-xs font-medium text-[#737373] uppercase tracking-wider">
+              <div className="col-span-4">Name / ticker</div>
+              <div className="col-span-3 text-right">Current Price / Average Cost</div>
+              <div className="col-span-3 text-right">Market Value</div>
+              <div className="col-span-2 text-right">Allocation</div>
+            </div>
+            <div className="flex flex-col">
+              {holdingsData.map((item, index) => {
+                const percent = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : "0.0";
+                const color = COLORS[index % COLORS.length];
+
+                return (
+                  <div key={item.symbol} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#262626] last:border-0 items-center hover:bg-[#1f1f1f] transition-colors">
+                    <div className="col-span-4 flex flex-col overflow-hidden">
+                      <span className="text-sm font-medium text-[#e5e5e5] truncate" title={item.stockName}>{item.stockName}</span>
+                      <span className="text-xs text-[#737373] mt-0.5 truncate">{item.symbol}</span>
+                    </div>
+                    <div className="col-span-3 flex flex-col items-end overflow-hidden">
+                      <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.price} ${item.priceCurrency}`}>
+                        {item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {CURRENCY_SYMBOLS[item.priceCurrency] || item.priceCurrency}
+                      </span>
+                      <span className="text-xs font-mono text-[#737373] mt-0.5 truncate w-full text-right" title={`Avg: ${item.avgCost} ${item.costCurrency}`}>
+                        Avg Cost: {item.avgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {CURRENCY_SYMBOLS[item.costCurrency] || item.costCurrency}
+                      </span>
+                    </div>
+                    <div className="col-span-3 flex flex-col items-end justify-center overflow-hidden">
+                      <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.value} ${baseCurrency}`}>
+                        {item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {baseSymbol}
+                      </span>
+                    </div>
+                    <div className="col-span-2 flex flex-col items-end justify-center overflow-hidden">
+                      <span className="text-sm font-mono font-medium text-right mb-1.5" style={{ color }}>
+                        {percent}%
+                      </span>
+                      <div className="w-28 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${percent}%`, backgroundColor: color }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
