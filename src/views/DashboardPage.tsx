@@ -52,11 +52,9 @@ export function DashboardPage({
   return (
     <>
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <SummaryCard title={`Total Value (${baseCurrency})`} value={displayValue}
           change={displayChange} isPositive={weightedDailyChange >= 0} icon={<Wallet size={18} />} />
-        <SummaryCard title="Open Positions" value={holdings.length.toString()}
-          change={`${quotes.length} priced in`} isPositive={true} icon={<ChartCandlestick size={18} />} changeIcon={<ChartCandlestick size={12} />} />
         <SummaryCard title={`Unrealized P/L (${baseCurrency})`} value={displayPL}
           change={displayPLPct} isPositive={unrealizedPL >= 0} icon={<PieChart size={18} />} />
       </div>

@@ -26,3 +26,20 @@ html {
 ::-webkit-scrollbar-thumb:hover {
     background-color: #404040;
 }
+
+.recharts-wrapper,
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-surface,
+.recharts-surface:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Also ensure the container we targeted earlier doesn't get an outline */
+.allocation-chart,
+.allocation-chart:focus,
+.allocation-chart svg path:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}

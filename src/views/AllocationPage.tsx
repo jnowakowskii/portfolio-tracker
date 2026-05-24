@@ -160,9 +160,9 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
               Holdings by ticker
             </span>
           </div>
-          <div className="p-6 flex-1 flex flex-col justify-center min-h-[460px]">
-            <ResponsiveContainer width="100%" height={420}>
-              <PieChart>
+          <div className="p-6 flex-1 flex flex-col justify-center min-h-[460px] select-none cursor-default" style={{ userSelect: "none", WebkitUserSelect: "none" }}>
+            <ResponsiveContainer width="100%" height={420} className="allocation-chart" style={{ userSelect: "none" }}>
+              <PieChart style={{ userSelect: "none", outline: "none" }}>
                 <Pie
                   data={holdingsData}
                   cx="50%"
