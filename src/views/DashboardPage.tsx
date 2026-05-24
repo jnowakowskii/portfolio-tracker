@@ -63,7 +63,7 @@ export function DashboardPage({
         {/* Left Column: Performance Chart */}
         <div className="lg:col-span-7 xl:col-span-8">
           <div
-            className="rounded-xl flex flex-col min-h-[460px] h-full"
+            className="rounded-xl flex flex-col h-[650px]"
             style={{ background: "#171717", border: "1px solid #262626" }}
           >
             <div
@@ -86,7 +86,7 @@ export function DashboardPage({
         <div className="lg:col-span-5 xl:col-span-4">
           {/* Transactions panel */}
           <div
-            className="rounded-xl flex flex-col overflow-hidden h-full"
+            className="rounded-xl flex flex-col overflow-hidden h-[650px]"
             style={{ background: "#171717", border: "1px solid #262626" }}
           >
             {/* Panel header */}
@@ -126,7 +126,7 @@ export function DashboardPage({
                     return (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between px-6 py-5 transition-colors"
+                        className="flex items-center justify-between px-6 py-5 transition-colors shrink-0"
                         style={{ borderBottom: "1px solid #1f1f1f" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "#1c1c1c")}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -156,7 +156,7 @@ export function DashboardPage({
                             {sym}{tx.price.toFixed(2)}
                           </div>
                           <div className="text-xs mt-0.5" style={{ color: "#525252" }}>
-                            {tx.quantity} shares
+                            x{tx.quantity} shares
                           </div>
                         </div>
                       </div>
