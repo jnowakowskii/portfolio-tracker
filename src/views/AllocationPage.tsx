@@ -167,9 +167,9 @@ export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: Allo
                   data={holdingsData}
                   cx="50%"
                   cy="45%"
-                  innerRadius={110}
+                  innerRadius={105}
                   outerRadius={160}
-                  paddingAngle={2}
+                  paddingAngle={1}
                   dataKey="value"
                   stroke="#171717"
                   strokeWidth={3}
