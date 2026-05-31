@@ -11,7 +11,7 @@ export function NavItem({ icon, label, active, onClick }: NavItemProps) {
   return (
     <button
       onClick={onClick}
-      className="group flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-all duration-150"
+      className="group relative flex items-center justify-center p-2.5 rounded-lg transition-all duration-150"
       style={active
         ? { background: "#262626", color: "#ffffff", border: "1px solid #404040" }
         : { background: "transparent", color: "#737373", border: "1px solid transparent" }
@@ -22,7 +22,9 @@ export function NavItem({ icon, label, active, onClick }: NavItemProps) {
       <div style={{ color: active ? "#ffffff" : "#525252" }}>
         {icon}
       </div>
-      <span className="font-medium text-sm tracking-wide">{label}</span>
+      <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-[#262626] text-[#e5e5e5] text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none z-50">
+        {label}
+      </span>
     </button>
   );
 }
