@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { LayoutDashboard, History, Calendar, BarChart3, Eye, Settings, PieChart } from "lucide-react";
+import { House, History, Calendar, BarChart3, Eye, Settings, PieChart } from "lucide-react";
 
 export interface NavSection {
   id: string;
@@ -15,7 +15,7 @@ export interface NavSection {
  * its corresponding page component.
  */
 export const NAV_ITEMS: NavSection[] = [
-  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+  { id: "dashboard", label: "Dashboard", icon: <House size={20} /> },
   { id: "allocation", label: "Allocation", icon: <PieChart size={20} /> },
   { id: "history", label: "History", icon: <History size={20} /> },
   { id: "dividends", label: "Dividends", icon: <Calendar size={20} /> },
