@@ -26,20 +26,15 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
         data-tauri-drag-region
         className="relative h-16 flex items-center justify-between px-6 bg-[#171717] border-b border-[#262626] w-full shrink-0 select-none z-50"
       >
-        {/* Left Section: Logo & Title */}
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
-              style={{ background: "#ffffff" }}
-            >
-              <img src={logoUrl} alt="Callisto logo" className="w-full h-full object-cover" />
-            </div>
-            <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Callisto</span>
+        {/* Left Section: Logo */}
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
+            style={{ background: "#ffffff" }}
+          >
+            <img src={logoUrl} alt="Callisto logo" className="w-full h-full object-cover" />
           </div>
-          <h2 className="text-lg font-semibold tracking-tight pointer-events-none capitalize" style={{ color: "#ffffff" }}>
-            {activeTab}
-          </h2>
+          <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Callisto</span>
         </div>
 
         {/* Center Section: Navigation */}
