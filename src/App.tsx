@@ -121,11 +121,12 @@ function App() {
    * Used on boot and force-refresh.
    */
   const fetchCombinedTracked = useCallback(async (
-    symbols: string[]
+    symbols: string[],
+    currentBaseCurrency: string
   ): Promise<{ marketQuotes: MarketQuote[]; rates: FxRates }> => {
     const t0 = Date.now();
     try {
-      const data = await getCombinedDataRaw(symbols);
+      const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
       setApiStats(prev => applyCallResult(prev, true, Date.now() - t0));
       return { marketQuotes: data.market_quotes, rates: data.fx_rates };
     } catch (error) {
@@ -207,7 +208,7 @@ function App() {
 
       setIsLoadingMarket(true);
       try {
-        const { marketQuotes, rates } = await fetchCombinedTracked(symbols); // 1 Yahoo call
+        const { marketQuotes, rates } = await fetchCombinedTracked(symbols, baseCurrency); // 1 Yahoo call
         setFxRates(rates);
         fxRatesRef.current = rates;
         applyMarketData(txs, marketQuotes, rates);
@@ -237,7 +238,7 @@ function App() {
 
     setIsLoadingMarket(true);
     try {
-      const { marketQuotes, rates } = await fetchCombinedTracked(symbols); // 1 Yahoo call
+      const { marketQuotes, rates } = await fetchCombinedTracked(symbols, baseCurrency); // 1 Yahoo call
       setFxRates(rates);
       fxRatesRef.current = rates;
       applyMarketData(txs, marketQuotes, rates);

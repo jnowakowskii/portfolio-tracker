@@ -177,9 +177,16 @@ async fn get_market_data(
 #[tauri::command]
 async fn get_combined_data(
     symbols: Vec<String>,
+    base_currency: String,
     auth: State<'_, YahooAuth>,
 ) -> Result<CombinedData, String> {
-    let fx_symbols = ["USDPLN=X", "EURPLN=X", "GBPPLN=X"];
+    let supported_currencies = ["USD", "EUR", "GBP", "PLN"];
+    let mut fx_symbols = Vec::new();
+    for curr in &supported_currencies {
+        if *curr != base_currency {
+            fx_symbols.push(format!("{}{}=X", curr, base_currency));
+        }
+    }
 
     // Build the full batch: user tickers + FX pairs (deduped)
     let mut all_symbols: Vec<String> = symbols.clone();
@@ -204,16 +211,17 @@ async fn get_combined_data(
     // Split into market quotes vs FX quotes
     let mut market_quotes: Vec<MarketQuote> = Vec::new();
     let mut fx_quotes: Vec<MarketQuote> = Vec::new();
+    let suffix = format!("{}={}", base_currency, "X");
 
     for q in all_quotes {
-        if q.symbol.ends_with("PLN=X") {
+        if q.symbol.ends_with(&suffix) {
             fx_quotes.push(q);
         } else {
             market_quotes.push(q);
         }
     }
 
-    let fx_rates = parse_fx_rates(fx_quotes);
+    let fx_rates = parse_fx_rates(fx_quotes, &base_currency);
 
     Ok(CombinedData {
         market_quotes,
@@ -303,13 +311,15 @@ async fn search_symbols(query: String) -> Result<Vec<SymbolSearchResult>, String
     Ok(data.quotes)
 }
 
-/// Extract FX rates (relative to PLN) from a slice of quotes for FX pair symbols.
-fn parse_fx_rates(quotes: Vec<MarketQuote>) -> HashMap<String, f64> {
+/// Extract FX rates (relative to base_currency) from a slice of quotes for FX pair symbols.
+fn parse_fx_rates(quotes: Vec<MarketQuote>, base_currency: &str) -> HashMap<String, f64> {
     let mut rates: HashMap<String, f64> = HashMap::new();
-    rates.insert("PLN".to_string(), 1.0);
+    rates.insert(base_currency.to_string(), 1.0);
+    let suffix = format!("{}={}", base_currency, "X");
+    
     for q in quotes {
-        // Symbol is like "USDPLN=X" → currency code is "USD"
-        let currency = q.symbol.replace("PLN=X", "");
+        // Symbol is like "USDEUR=X" → currency code is "USD"
+        let currency = q.symbol.replace(&suffix, "");
         if !currency.is_empty() && q.price > 0.0 {
             rates.insert(currency, q.price);
         }

@@ -70,8 +70,8 @@ export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]
  * Pass the ticker symbols currently in the portfolio; FX pairs are appended
  * automatically on the Rust side. Throws on error — used by App for diagnostics.
  */
-export async function getCombinedDataRaw(symbols: string[]): Promise<CombinedData> {
-  return invoke<CombinedData>("get_combined_data", { symbols });
+export async function getCombinedDataRaw(symbols: string[], baseCurrency: string): Promise<CombinedData> {
+  return invoke<CombinedData>("get_combined_data", { symbols, baseCurrency });
 }
 
 export async function searchSymbols(query: string): Promise<SymbolSearchResult[]> {
