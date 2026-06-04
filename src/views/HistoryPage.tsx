@@ -69,7 +69,6 @@ export function HistoryPage({ transactions, onEdit, onDelete }: HistoryPageProps
                     <th style={tableHeaderStyle}>Side</th>
                     <th style={tableHeaderStyle}>Quantity</th>
                     <th style={tableHeaderStyle}>Price</th>
-                    <th style={tableHeaderStyle}>Commission</th>
                     <th style={tableHeaderStyle}>Currency</th>
                     <th style={{ ...tableHeaderStyle, textAlign: "right" }}>Actions</th>
                   </tr>
@@ -105,9 +104,6 @@ export function HistoryPage({ transactions, onEdit, onDelete }: HistoryPageProps
                         </td>
                         <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>
                           {tx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                        </td>
-                        <td style={{ ...tableCellStyle, fontFamily: "monospace", color: "#a3a3a3" }}>
-                          {tx.commission.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                         <td style={tableCellStyle}>{tx.currency}</td>
                         <td style={{ ...tableCellStyle, textAlign: "right" }}>
