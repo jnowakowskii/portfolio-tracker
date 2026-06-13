@@ -22,8 +22,8 @@ export function DividendsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* TOP ROW: 2:1 Ratio */}
-        {/* Left Card: Chart */}
+        {/* top row */}
+        {/* left card chart */}
         <div className="lg:col-span-8 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col min-h-[400px]">
           <h2 className="text-lg font-semibold text-neutral-100 mb-6">
             Dividend Income by Month
@@ -69,10 +69,10 @@ export function DividendsPage() {
           </div>
         </div>
 
-        {/* Right Card: Stats */}
+        {/* right card stats */}
         <div className="lg:col-span-4 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col justify-center space-y-6 min-h-[400px]">
 
-          {/* Top: Annual Income */}
+          {/* top annual income */}
           <div>
             <p className="text-sm font-medium text-neutral-400 mb-1">Annual Income</p>
             <p className="text-3xl font-bold text-neutral-100 tracking-tight">
@@ -83,7 +83,7 @@ export function DividendsPage() {
             </p>
           </div>
 
-          {/* Middle: Monthly & Daily */}
+          {/* middle monthly and daily */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-neutral-400 mb-1">Monthly</p>
@@ -105,7 +105,7 @@ export function DividendsPage() {
             </div>
           </div>
 
-          {/* Bottom: Yields */}
+          {/* bottom yields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-neutral-400 mb-1">Portfolio Yield</p>
@@ -129,15 +129,15 @@ export function DividendsPage() {
 
         </div>
 
-        {/* BOTTOM ROW: 1:1 Ratio */}
-        {/* Left Placeholder */}
+        {/* bottom row */}
+        {/* left placeholder */}
         <div className="lg:col-span-6 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex items-center justify-center min-h-[200px]">
           <p className="text-neutral-400 text-sm font-medium">
             Upcoming Dividends (Coming Soon)
           </p>
         </div>
 
-        {/* Right Card: Top Payers */}
+        {/* right card top payers */}
         <div className="lg:col-span-6 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col min-h-[200px]">
           <h2 className="text-lg font-semibold text-neutral-100 mb-6">Stocks</h2>
           {topPayers.length === 0 ? (

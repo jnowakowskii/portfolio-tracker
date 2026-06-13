@@ -3,7 +3,7 @@ import { Transaction, FxRates, PortfolioHolding, MarketQuote } from "./marketDat
 export interface DividendEvent {
   symbol: string;
   amount: number;
-  date: number; // Unix timestamp in seconds
+  date: number; // unix timestamp
 }
 
 export interface MonthlyDividend {
@@ -62,7 +62,7 @@ export function calculateDividends(
     amount: 0,
   }));
 
-  // Map to store current currency and holdings per symbol
+  // store current currency and holdings per symbol
   const currencyMap = new Map<string, string>();
   const currentHoldings = new Map<string, number>();
 
@@ -82,7 +82,7 @@ export function calculateDividends(
   for (const event of dividendEvents) {
     const eventDateMs = event.date * 1000;
     
-    // 1. CHRONOLOGICAL REALITY (Total Earned All-Time & Top Payers)
+    // total earned all time
     let quantityAtExDate = 0;
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
@@ -103,8 +103,8 @@ export function calculateDividends(
       payoutsPerSymbol.set(event.symbol, (payoutsPerSymbol.get(event.symbol) || 0) + payoutBase);
     }
 
-    // 2. FORWARD PROJECTION (Projected Annual Income & Monthly Chart)
-    // Project the upcoming 12 months based on the last 365 days of events and CURRENT holdings
+    // forward projection
+    // project the upcoming months based on events and holdings
     if (eventDateMs >= oneYearAgoMs && eventDateMs <= now.getTime()) {
       const currentQty = currentHoldings.get(event.symbol) || 0;
       if (currentQty > 0) {

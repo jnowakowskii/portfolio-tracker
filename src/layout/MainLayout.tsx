@@ -23,12 +23,12 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
   return (
     <div className="flex flex-col h-screen font-sans" style={{ background: "#0a0a0a", color: "#ffffff" }}>
 
-      {/* Unified Header */}
+      {/* unified header */}
       <header
         data-tauri-drag-region
         className="relative h-16 flex items-center justify-between px-6 bg-[#171717] border-b border-[#262626] w-full shrink-0 select-none z-50"
       >
-        {/* Left Section: Logo */}
+        {/* logo section */}
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
@@ -40,7 +40,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           {isLoadingMarket && <RefreshCw size={14} className="text-neutral-500 animate-spin ml-2" />}
         </div>
 
-        {/* Center Section: Navigation */}
+        {/* navigation section */}
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center gap-6">
           {topItems.map(item => (
             <NavItem
@@ -53,9 +53,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           ))}
         </div>
 
-        {/* Right Section: Actions & Window Controls */}
+        {/* actions and controls */}
         <div className="flex items-center gap-4">
-          {/* Add Transaction */}
+          {/* add transaction button */}
           <button
             onClick={onAddTransactionClick}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 group z-50"
@@ -67,7 +67,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             Add Transaction
           </button>
 
-          {/* Settings */}
+          {/* settings button */}
           <div className="flex items-center z-50">
             {bottomItems.map(item => (
               <NavItem
@@ -80,7 +80,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             ))}
           </div>
 
-          {/* Window controls */}
+          {/* window controls */}
           <div className="flex items-center gap-0.5 pl-4 z-50" style={{ borderLeft: "1px solid #262626" }}>
             <button
               onClick={() => appWindow.minimize().catch(e => alert("Minimize error: " + e))}
@@ -106,7 +106,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* main content area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden relative p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {children}

@@ -18,7 +18,7 @@ const panelHeader: React.CSSProperties = {
   borderBottom: "1px solid #262626",
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// helpers
 
 function StatRow({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
@@ -36,7 +36,7 @@ function formatTime(date: Date | null): string {
   return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// component
 
 export function SettingsPage() {
   const {
@@ -100,7 +100,7 @@ export function SettingsPage() {
 
         <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Settings</h1>
 
-        {/* ── General ─────────────────────────────────────────────────────── */}
+        {/* general section */}
         <div style={panel}>
           <div style={panelHeader}>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>General</span>
@@ -128,9 +128,9 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* ── API & System Diagnostics (Accordion) ─────────────────────────── */}
+        {/* api and system diagnostics */}
         <div style={panel}>
-          {/* Accordion Header */}
+          {/* accordion header */}
           <button
             className="w-full flex items-center justify-between px-6 py-4 transition-colors"
             style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "1px solid transparent" }}
@@ -154,7 +154,7 @@ export function SettingsPage() {
             />
           </button>
 
-          {/* Accordion Body */}
+          {/* accordion body */}
           <div
             style={{
               maxHeight: diagnosticsOpen ? "600px" : "0px",
@@ -164,7 +164,7 @@ export function SettingsPage() {
           >
             <div className="px-6 py-5 space-y-5">
 
-              {/* Stats Grid */}
+              {/* stats grid */}
               <div>
                 <StatRow
                   label="Yahoo Finance Status"
@@ -183,7 +183,7 @@ export function SettingsPage() {
                 <StatRow label="Last Update" value={formatTime(apiStats.lastFetchTime)} />
               </div>
 
-              {/* Error Log */}
+              {/* error log */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#525252" }}>Error Log (last 3)</p>
                 <div
@@ -203,7 +203,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* action buttons */}
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={resetApiStats}
@@ -231,7 +231,7 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* ── Danger Zone ─────────────────────────────────────────────────── */}
+        {/* danger zone */}
         <div style={{ ...panel, border: "1px solid #2d1515" }}>
           <div style={{ ...panelHeader, borderBottom: "1px solid #2d1515", background: "rgba(220,38,38,0.04)" }}>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#ef4444" }}>Danger Zone</span>

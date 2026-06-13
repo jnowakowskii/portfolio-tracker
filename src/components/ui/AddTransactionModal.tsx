@@ -57,7 +57,7 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
 
-  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday start
+  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // monday start
 
   const days = [];
   for (let i = 0; i < startOffset; i++) {
@@ -175,13 +175,13 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
 
   const ex = exchange.toLowerCase();
 
-  // US
+  // united states
   if (ex.includes("nyse") || ex.includes("nasdaq") || ex.includes("otc") || ex.includes("nms") || ex.includes("nyq") || ex.includes("pnk") || ex.includes("oqx") || ex.includes("obc") || ex.includes("bzx") || ex.includes("cboe") || ex.includes("arcx") || ex.includes("bats") || ex.includes("iex") || ex.includes("phlx")) return "us";
 
-  // Europe (Pan-European)
+  // europe pan european
   if (ex.includes("dxe") || ex.includes("cboe europe") || (ex.includes("euronext") && !ex.includes("paris") && !ex.includes("amsterdam") && !ex.includes("brussels") && !ex.includes("lisbon"))) return "eu";
 
-  // Europe (National)
+  // europe national
   if (ex.includes("warsaw") || ex.includes("wse")) return "pl";
   if (ex.includes("frankfurt") || ex.includes("xetra") || ex.includes("ger") || ex.includes("fra") || ex.includes("stuttgart") || ex.includes("stu") || ex.includes("berlin") || ex.includes("munich") || ex.includes("dus") || ex.includes("hamburg") || ex.includes("hannover") || ex.includes("mun")) return "de";
   if (ex.includes("london") || ex.includes("lse") || ex.includes("iobe") || ex.includes("aquis")) return "gb";
@@ -203,7 +203,7 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
   if (ex.includes("budapest") || ex.includes("bse") || ex.includes("bud")) return "hu";
   if (ex.includes("moscow") || ex.includes("mcx") || ex.includes("moex")) return "ru";
 
-  // Americas
+  // americas
   if (ex.includes("toronto") || ex.includes("tsx") || ex.includes("tor") || ex.includes("van") || ex.includes("neo") || ex.includes("cnsx") || ex.includes("cse") || ex.includes("cns")) return "ca";
   if (ex.includes("mexico") || ex.includes("mex") || ex.includes("bmv")) return "mx";
   if (ex.includes("sao paulo") || ex.includes("b3") || ex.includes("sao") || ex.includes("bovespa")) return "br";
@@ -212,7 +212,7 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
   if (ex.includes("colombia") || ex.includes("bvc") || ex.includes("bogota")) return "co";
   if (ex.includes("lima") || ex.includes("bvl")) return "pe";
 
-  // Asia / Pacific
+  // asia pacific
   if (ex.includes("tokyo") || ex.includes("tse") || ex.includes("tyo") || ex.includes("ose") || ex.includes("fuk") || ex.includes("tok") || ex.includes("fka") || ex.includes("sap")) return "jp";
   if (ex.includes("hong kong") || ex.includes("hkse") || ex.includes("hkg")) return "hk";
   if (ex.includes("shanghai") || ex.includes("shenzhen") || ex.includes("shh") || ex.includes("shz") || ex.includes("sse") || ex.includes("szse")) return "cn";
@@ -227,7 +227,7 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
   if (ex.includes("bangkok") || ex.includes("set") || ex.includes("thailand")) return "th";
   if (ex.includes("manila") || ex.includes("pse") || ex.includes("psi")) return "ph";
 
-  // Middle East / Africa
+  // middle east africa
   if (ex.includes("johannesburg") || ex.includes("jse") || ex.includes("jnb")) return "za";
   if (ex.includes("tel aviv") || ex.includes("tae") || ex.includes("tase") || ex.includes("tlv")) return "il";
   if (ex.includes("saudi") || ex.includes("tadawul") || ex.includes("ksa") || ex.includes("sau")) return "sa";
@@ -300,7 +300,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
     if (isOpen) {
       initialLoadRef.current = true;
       if (editData) {
-        // Strip `.WA` from display symbol if the currency is PLN.
+        // strip suffix from symbol for pln
         let displaySymbol = editData.symbol;
         if (editData.currency === "PLN" && displaySymbol.endsWith(".WA")) {
           displaySymbol = displaySymbol.replace(".WA", "");
@@ -327,7 +327,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
       const qtyNum = parseFloat(quantity);
       const priceNum = parseFloat(price);
 
-      // Auto-append .WA for Polish stocks if no suffix is provided
+      // append suffix for polish stocks
       let finalSymbol = symbol.trim().toUpperCase();
       if (currency === "PLN" && !finalSymbol.includes(".")) {
         finalSymbol += ".WA";
@@ -383,7 +383,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
         className="w-full max-w-md rounded-xl"
         style={{ background: "#171717", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
       >
-        {/* Header */}
+        {/* header section */}
         <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
           <h2 className="text-base font-semibold" style={{ color: "#ffffff" }}>
             {editData ? "Edit Transaction" : "Add Transaction"}
@@ -399,10 +399,10 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
           </button>
         </div>
 
-        {/* Form */}
+        {/* form section */}
         <form onSubmit={handleSubmit} className="p-6 pb-40 space-y-5 max-h-[85vh] overflow-y-auto">
 
-          {/* Symbol */}
+          {/* symbol field */}
           <Field label="Symbol">
             <div className="relative" ref={searchContainerRef}>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
@@ -499,7 +499,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
             </div>
           </Field>
 
-          {/* Side */}
+          {/* side field */}
           <Field label="Side">
             <div className="grid grid-cols-2 gap-2">
               {(["BUY", "SELL"] as const).map(s => (
@@ -521,7 +521,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
             </div>
           </Field>
 
-          {/* Currency */}
+          {/* currency field */}
           <Field label="Currency">
             <div className="relative">
               <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
@@ -541,7 +541,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
             </div>
           </Field>
 
-          {/* Qty & Price */}
+          {/* quantity and price fields */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Quantity">
               <div className="relative">
@@ -570,12 +570,12 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
             </Field>
           </div>
 
-          {/* Date */}
+          {/* date field */}
           <Field label="Date">
             <CustomDatePicker date={date} onChange={setDate} />
           </Field>
 
-          {/* Actions */}
+          {/* action buttons */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"

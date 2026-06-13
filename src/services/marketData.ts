@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-// ── Types ──────────────────────────────────────────────────────────────
+// types
 
 export interface MarketQuote {
   symbol: string;
@@ -30,15 +30,15 @@ export interface Transaction {
 
 export interface PortfolioHolding {
   symbol: string;
-  /** Net quantity (BUY adds, SELL subtracts) */
+  /** net quantity */
   quantity: number;
-  /** Total cost basis in the holding's native currency */
+  /** total cost basis */
   totalCost: number;
-  /** Currency of this holding's transactions */
+  /** holding currency */
   currency: string;
 }
 
-/** FX rates relative to PLN. Key = currency code, value = rate to PLN */
+/** fx rates relative to base currency */
 export type FxRates = Record<string, number>;
 
 export const SUPPORTED_CURRENCIES = ["PLN", "USD", "EUR", "GBP"] as const;
@@ -51,24 +51,22 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: "£",
 };
 
-/** Return type from the combined boot/refresh call. */
+/** combined data result */
 export interface CombinedData {
   market_quotes: MarketQuote[];
   fx_rates: FxRates;
 }
 
-// ── API ────────────────────────────────────────────────────────────────
+// api
 
-/** Like getMarketData but throws on error — used by App for diagnostics tracking. */
+/** get market data */
 export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]> {
   if (symbols.length === 0) return [];
   return invoke<MarketQuote[]>("get_market_data", { symbols });
 }
 
 /**
- * Single-batch Yahoo Finance call for both market quotes and FX rates.
- * Pass the ticker symbols currently in the portfolio; FX pairs are appended
- * automatically on the Rust side. Throws on error — used by App for diagnostics.
+ * combined api call to get quotes and fx rates
  */
 export async function getCombinedDataRaw(symbols: string[], baseCurrency: string): Promise<CombinedData> {
   return invoke<CombinedData>("get_combined_data", { symbols, baseCurrency });
@@ -80,11 +78,10 @@ export async function searchSymbols(query: string): Promise<SymbolSearchResult[]
 }
 
 
-// ── Helpers ────────────────────────────────────────────────────────────
+// helpers
 
 /**
- * Aggregate transactions into net holdings per symbol.
- * Tracks the currency from the first transaction for that symbol.
+ * aggregate transactions into net holdings per symbol
  */
 export function aggregateHoldings(transactions: Transaction[]): PortfolioHolding[] {
   const map = new Map<string, PortfolioHolding>();
@@ -109,13 +106,12 @@ export function aggregateHoldings(transactions: Transaction[]): PortfolioHolding
     map.set(tx.symbol, existing);
   }
 
-  // Only return positions with shares still held
+  // return positions with shares still held
   return Array.from(map.values()).filter(h => h.quantity > 0);
 }
 
 /**
- * Calculate total portfolio market value in PLN by multiplying held quantities
- * by their current market prices, converted to PLN via FX rates.
+ * calculate total portfolio value
  */
 export function calculatePortfolioValue(
   holdings: PortfolioHolding[],
@@ -129,15 +125,14 @@ export function calculatePortfolioValue(
     if (!quote) return total;
 
     const priceInNative = quote.price;
-    // The quote.currency tells us what currency the market price is in
+    // the quote currency tells us what currency the market price is in
     const fxRate = fxRates[quote.currency] ?? 1.0;
     return total + h.quantity * priceInNative * fxRate;
   }, 0);
 }
 
 /**
- * Calculate total cost basis of current holdings in PLN.
- * Each holding's cost is in its native transaction currency, converted to PLN via FX rates.
+ * calculate total cost basis
  */
 export function calculateTotalCost(
   holdings: PortfolioHolding[],

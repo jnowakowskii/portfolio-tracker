@@ -49,7 +49,7 @@ export function DashboardPage() {
 
   return (
     <>
-      {/* Summary cards */}
+      {/* summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <SummaryCard title={`Total Value (${baseCurrency})`} value={displayValue}
           change={displayChange} isPositive={weightedDailyChange >= 0} icon={<Wallet size={18} />} />
@@ -58,7 +58,7 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left Column: Performance Chart */}
+        {/* performance chart */}
         <div className="lg:col-span-7 xl:col-span-8">
           <div
             className="rounded-xl flex flex-col h-[650px]"
@@ -80,14 +80,14 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Transactions */}
+        {/* transactions column */}
         <div className="lg:col-span-5 xl:col-span-4">
-          {/* Transactions panel */}
+          {/* transactions panel */}
           <div
             className="rounded-xl flex flex-col overflow-hidden h-[650px]"
             style={{ background: "#171717", border: "1px solid #262626" }}
           >
-            {/* Panel header */}
+            {/* panel header */}
             <div
               className="flex items-center justify-between px-6 py-4 shrink-0"
               style={{ borderBottom: "1px solid #262626" }}
@@ -100,7 +100,7 @@ export function DashboardPage() {
               </span>
             </div>
 
-            {/* List */}
+            {/* transaction list */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
               {transactions.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3">
@@ -129,7 +129,7 @@ export function DashboardPage() {
                         onMouseEnter={e => (e.currentTarget.style.background = "#1c1c1c")}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                       >
-                        {/* Left */}
+                        {/* transaction left side */}
                         <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
@@ -148,7 +148,7 @@ export function DashboardPage() {
                           </div>
                         </div>
 
-                        {/* Right */}
+                        {/* transaction right side */}
                         <div className="flex flex-col items-end shrink-0 ml-4">
                           <div className="text-sm font-semibold font-mono" style={{ color: "#ffffff" }}>
                             {sym}{tx.price.toFixed(2)}

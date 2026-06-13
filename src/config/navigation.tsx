@@ -5,14 +5,12 @@ export interface NavSection {
   id: string;
   label: string;
   icon: ReactNode;
-  /** If true, the item is pushed to the bottom of the sidebar */
+  /** bottom alignment */
   bottom?: boolean;
 }
 
 /**
- * Single source of truth for all navigation tabs.
- * To add a new section, just append an entry here and create
- * its corresponding page component.
+ * navigation tabs
  */
 export const NAV_ITEMS: NavSection[] = [
   { id: "dashboard", label: "Dashboard", icon: <House size={20} /> },

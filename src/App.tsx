@@ -18,12 +18,12 @@ function App() {
 
   const hasInitialized = useRef(false);
 
-  // ── Boot sequence ─────────────────────────────────────────────────────────────────────
+  // boot sequence
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    // Kick off background fetch on mount (Stale-While-Revalidate)
+    // initial background fetch
     usePortfolioStore.getState().loadTransactions().then(() =>
       usePortfolioStore.getState().fetchMarketData()
     );
@@ -34,7 +34,7 @@ function App() {
     setIsModalOpen(true);
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // render section
   const renderPage = () => {
     switch (activeTab) {
       case "dashboard":

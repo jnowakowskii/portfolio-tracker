@@ -47,28 +47,28 @@ function applyCallResult(
 }
 
 interface PortfolioState {
-  // Data State
+  // data state
   transactions: Transaction[];
   holdings: PortfolioHolding[];
   quotes: MarketQuote[];
   fxRates: FxRates;
   baseCurrency: SupportedCurrency;
   
-  // Calculated State
+  // calculated state
   portfolioValue: number;
   totalCost: number;
   
-  // Dividend State
+  // dividend state
   dividendEvents: DividendEvent[];
   monthlyDividends: MonthlyDividend[];
   dividendStats: DividendStats;
   topPayers: TopPayer[];
 
-  // API State
+  // api state
   isLoadingMarket: boolean;
   apiStats: ApiStat;
 
-  // Actions
+  // actions
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
   loadTransactions: () => Promise<Transaction[]>;
   fetchMarketData: (txs?: Transaction[]) => Promise<void>;
@@ -78,18 +78,18 @@ interface PortfolioState {
 export const usePortfolioStore = create<PortfolioState>()(
   persist(
     (set, get) => ({
-      // Initial Data State
+      // initial data state
       transactions: [],
       holdings: [],
       quotes: [],
       fxRates: { PLN: 1.0 },
-      baseCurrency: "PLN", // Default, will be overwritten by persist
+      baseCurrency: "PLN", // default overwritten by persist
       
-      // Initial Calculated State
+      // initial calculated state
       portfolioValue: 0,
       totalCost: 0,
       
-      // Initial Dividend State
+      // initial dividend state
       dividendEvents: [],
       monthlyDividends: [],
       dividendStats: {
@@ -99,15 +99,15 @@ export const usePortfolioStore = create<PortfolioState>()(
       },
       topPayers: [],
 
-      // API State
+      // api state
       isLoadingMarket: false,
       apiStats: initialApiStats,
 
-      // Actions
+      // actions
       resetApiStats: () => set({ apiStats: initialApiStats }),
       setBaseCurrency: async (currency: SupportedCurrency) => {
         set({ baseCurrency: currency });
-        // After setting currency, automatically fetch new rates and recalculate
+        // fetch rates and recalculate
         await get().fetchMarketData();
       },
 
@@ -182,7 +182,7 @@ export const usePortfolioStore = create<PortfolioState>()(
 
           const symbols = Array.from(new Set(txs.map(t => t.symbol)));
 
-          // Fetch Market Quotes and FX Rates (1 combined call)
+          // fetch market quotes and fx rates
           let marketQuotes: MarketQuote[] = state.quotes;
           let rates: FxRates = state.fxRates;
           const t0 = Date.now();
@@ -201,7 +201,7 @@ export const usePortfolioStore = create<PortfolioState>()(
              console.error("Failed to fetch combined market data:", error);
           }
 
-          // Fetch Dividend Events
+          // fetch dividend events
           let events: DividendEvent[] = state.dividendEvents;
           try {
              events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
@@ -210,7 +210,7 @@ export const usePortfolioStore = create<PortfolioState>()(
              console.error("Failed to fetch dividend history:", error);
           }
 
-          // Run Calculations
+          // run calculations
           const pValue = calculatePortfolioValue(currentHoldings, marketQuotes, rates);
           const tCost = calculateTotalCost(currentHoldings, rates);
           set({ portfolioValue: pValue, totalCost: tCost });
@@ -240,7 +240,7 @@ export const usePortfolioStore = create<PortfolioState>()(
     {
       name: "portfolio-storage",
       storage: createJSONStorage(() => localStorage),
-      // Partialize to only persist data, not ephemeral loading states
+      // partialize to only persist data
       partialize: (state) => ({
         transactions: state.transactions,
         holdings: state.holdings,
