@@ -26,6 +26,8 @@ export interface TopPayer {
   currency: string;
   yield: number;
   yieldOnCost: number;
+  quantity: number;
+  dividendPerShare: number;
 }
 
 export interface DividendCalculationResult {
@@ -162,6 +164,8 @@ export function calculateDividends(
         currency: quote?.currency || currencyMap.get(symbol) || baseCurrency,
         yield: symYield,
         yieldOnCost: symYoc,
+        quantity: holding?.quantity || 0,
+        dividendPerShare: (holding?.quantity || 0) > 0 ? (annualPerSymbolNative.get(symbol) || 0) / holding!.quantity : 0,
       };
     })
     .sort((a, b) => b.annualAmount - a.annualAmount)

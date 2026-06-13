@@ -70,34 +70,63 @@ export function DividendsPage() {
         </div>
 
         {/* Right Card: Stats */}
-        <div className="lg:col-span-4 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col justify-center space-y-8 min-h-[400px]">
+        <div className="lg:col-span-4 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col justify-center space-y-6 min-h-[400px]">
+
+          {/* Top: Annual Income */}
           <div>
             <p className="text-sm font-medium text-neutral-400 mb-1">Annual Income</p>
-            <p className="text-4xl font-bold text-neutral-100">
+            <p className="text-3xl font-bold text-neutral-100 tracking-tight">
               {dividendStats.annualIncome.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-              })} {baseCurrency}
+              })} <span className="text-2xl text-neutral-400 font-medium">{baseCurrency}</span>
             </p>
           </div>
-          <div>
-            <p className="text-sm font-medium text-neutral-400 mb-1">Portfolio Yield</p>
-            <p className="text-4xl font-bold text-neutral-100">
-              {dividendStats.yield.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}%
-            </p>
+
+          {/* Middle: Monthly & Daily */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-medium text-neutral-400 mb-1">Monthly</p>
+              <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
+                {(dividendStats.annualIncome / 12).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} <span className="text-sm text-neutral-500 font-medium">{baseCurrency}</span>
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-neutral-400 mb-1">Daily</p>
+              <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
+                {(dividendStats.annualIncome / 365).toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })} <span className="text-sm text-neutral-500 font-medium">{baseCurrency}</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-neutral-400 mb-1">Yield on Cost</p>
-            <p className="text-4xl font-bold text-neutral-100">
-              {dividendStats.yieldOnCost.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}%
-            </p>
+
+          {/* Bottom: Yields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-medium text-neutral-400 mb-1">Portfolio Yield</p>
+              <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
+                {dividendStats.yield.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}%
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-neutral-400 mb-1">Yield on Cost</p>
+              <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
+                {dividendStats.yieldOnCost.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}%
+              </p>
+            </div>
           </div>
+
         </div>
 
         {/* BOTTOM ROW: 1:1 Ratio */}
@@ -122,6 +151,9 @@ export function DividendsPage() {
                   <div className="flex flex-col">
                     <span className="text-neutral-100 font-medium">{payer.symbol}</span>
                     <span className="text-neutral-400 text-xs">{payer.name}</span>
+                    <span className="text-neutral-500 text-xs mt-0.5">
+                      {payer.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {payer.dividendPerShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {payer.currency}
+                    </span>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-neutral-100 font-semibold">
