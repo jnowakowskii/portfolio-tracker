@@ -62,7 +62,7 @@ export function DividendsPage({ monthlyDividends, dividendStats }: DividendsPage
                     color: "#f5f5f5",
                   }}
                   itemStyle={{ color: "#f5f5f5" }}
-                  formatter={(value: number) => [
+                  formatter={(value: any) => [
                     value.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,

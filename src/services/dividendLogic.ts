@@ -32,14 +32,15 @@ export function calculateDividends(
   transactions: Transaction[],
   dividendEvents: DividendEvent[],
   fxRates: FxRates,
-  baseCurrency: string
+  baseCurrency: string,
+  portfolioValue: number,
+  totalCost: number
 ): DividendCalculationResult {
   let totalAllTime = 0;
   let annualIncome = 0; // sum over the last 12 months
 
   const now = new Date();
   const currentYear = now.getFullYear();
-  const currentMonthIndex = now.getMonth();
 
   // Initialize current year's monthly data array
   const monthlyData: MonthlyDividend[] = MONTH_NAMES.map(month => ({
@@ -104,12 +105,15 @@ export function calculateDividends(
     }
   }
 
+  const portfolioYield = portfolioValue > 0 ? (annualIncome / portfolioValue) * 100 : 0;
+  const yieldOnCost = totalCost > 0 ? (annualIncome / totalCost) * 100 : 0;
+
   return {
     monthlyData,
     stats: {
       annualIncome,
-      yield: 0, // Yield calculations usually require current market value
-      yieldOnCost: 0, // Yield on cost requires total cost basis
+      yield: portfolioYield,
+      yieldOnCost,
     },
     totalAllTime,
   };

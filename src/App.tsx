@@ -6,7 +6,7 @@ import { AllocationPage } from "./views/AllocationPage";
 import { PlaceholderPage } from "./views/PlaceholderPage";
 import { SettingsPage } from "./views/SettingsPage";
 import { HistoryPage } from "./views/HistoryPage";
-import { DividendsPage } from "./views/DividendsPage"; // We'll assume DividendsPage is created later
+import { DividendsPage } from "./views/DividendsPage";
 import { NAV_ITEMS } from "./config/navigation";
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
@@ -165,22 +165,26 @@ function App() {
     const currentHoldings = aggregateHoldings(txs);
     setHoldings(currentHoldings);
     setQuotes(marketQuotes);
-    if (currentHoldings.length === 0) {
-      setPortfolioValue(0);
-      setTotalCost(0);
-    } else {
-      setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));
-      setTotalCost(calculateTotalCost(currentHoldings, rates));
+    let pValue = 0;
+    let tCost = 0;
+    if (currentHoldings.length > 0) {
+      pValue = calculatePortfolioValue(currentHoldings, marketQuotes, rates);
+      tCost = calculateTotalCost(currentHoldings, rates);
     }
+    setPortfolioValue(pValue);
+    setTotalCost(tCost);
+    return { pValue, tCost };
   }, []);
 
   const recalculateDividends = useCallback((
     txs: Transaction[],
     events: DividendEvent[],
     rates: FxRates,
-    currency: string
+    currency: string,
+    pValue: number,
+    tCost: number
   ) => {
-    const res = calculateDividends(txs, events, rates, currency);
+    const res = calculateDividends(txs, events, rates, currency, pValue, tCost);
     setMonthlyDividends(res.monthlyData);
     setDividendStats(res.stats);
   }, []);
@@ -208,11 +212,13 @@ function App() {
       const symbols = Array.from(new Set(txs.map(t => t.symbol)));
       const marketQuotes = await fetchMarketDataTracked(symbols); // 1 Yahoo call
       setQuotes(marketQuotes);
-      setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));
-      setTotalCost(calculateTotalCost(currentHoldings, rates));
-      
+      const pValue = calculatePortfolioValue(currentHoldings, marketQuotes, rates);
+      const tCost = calculateTotalCost(currentHoldings, rates);
+      setPortfolioValue(pValue);
+      setTotalCost(tCost);
+
       // Recalculate dividends with existing events but new transactions/prices
-      recalculateDividends(txs, dividendEventsRef.current, rates, baseCurrency);
+      recalculateDividends(txs, dividendEventsRef.current, rates, baseCurrency, pValue, tCost);
     } finally {
       setIsLoadingMarket(false);
     }
@@ -221,9 +227,11 @@ function App() {
   // When baseCurrency changes, recalculate from cached data — NO Yahoo calls
   useEffect(() => {
     if (holdings.length === 0 || quotes.length === 0) return;
-    setPortfolioValue(calculatePortfolioValue(holdings, quotes, fxRates));
-    setTotalCost(calculateTotalCost(holdings, fxRates));
-    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency);
+    const pValue = calculatePortfolioValue(holdings, quotes, fxRates);
+    const tCost = calculateTotalCost(holdings, fxRates);
+    setPortfolioValue(pValue);
+    setTotalCost(tCost);
+    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency, pValue, tCost);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseCurrency]);
 
@@ -246,14 +254,14 @@ function App() {
         const { marketQuotes, rates } = await fetchCombinedTracked(symbols, baseCurrency); // 1 Yahoo call
         setFxRates(rates);
         fxRatesRef.current = rates;
-        applyMarketData(txs, marketQuotes, rates);
+        const { pValue, tCost } = applyMarketData(txs, marketQuotes, rates);
 
         // Fetch dividends right after combined data
         try {
           const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
           setDividendEvents(events);
           dividendEventsRef.current = events;
-          recalculateDividends(txs, events, rates, baseCurrency);
+          recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost);
         } catch (e) {
           console.error("Failed to fetch dividend history:", e);
         }
@@ -287,14 +295,14 @@ function App() {
       const { marketQuotes, rates } = await fetchCombinedTracked(symbols, baseCurrency); // 1 Yahoo call
       setFxRates(rates);
       fxRatesRef.current = rates;
-      applyMarketData(txs, marketQuotes, rates);
+      const { pValue, tCost } = applyMarketData(txs, marketQuotes, rates);
 
       // Fetch dividends right after combined data
       try {
         const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
         setDividendEvents(events);
         dividendEventsRef.current = events;
-        recalculateDividends(txs, events, rates, baseCurrency);
+        recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost);
       } catch (e) {
         console.error("Failed to fetch dividend history:", e);
       }
