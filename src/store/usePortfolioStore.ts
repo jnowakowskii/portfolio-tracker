@@ -1,0 +1,226 @@
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { invoke } from "@tauri-apps/api/core";
+import Database from "@tauri-apps/plugin-sql";
+import {
+  getCombinedDataRaw,
+  aggregateHoldings,
+  calculatePortfolioValue,
+  calculateTotalCost,
+  type MarketQuote,
+  type Transaction,
+  type PortfolioHolding,
+  type FxRates,
+  type SupportedCurrency,
+} from "../services/marketData";
+import {
+  calculateDividends,
+  type DividendEvent,
+  type MonthlyDividend,
+  type DividendStats,
+  type TopPayer,
+} from "../services/dividendLogic";
+import { type ApiStat, initialApiStats } from "../types/apiStats";
+
+function applyCallResult(
+  prev: ApiStat,
+  success: boolean,
+  latencyMs: number,
+  errorMsg?: string
+): ApiStat {
+  const newTotal = prev.totalRequests + 1;
+  const newAvg =
+    prev.totalRequests === 0
+      ? latencyMs
+      : Math.round((prev.avgLatencyMs * prev.totalRequests + latencyMs) / newTotal);
+  return {
+    totalRequests: newTotal,
+    successfulCalls: success ? prev.successfulCalls + 1 : prev.successfulCalls,
+    failedCalls: success ? prev.failedCalls : prev.failedCalls + 1,
+    lastFetchTime: success ? new Date() : prev.lastFetchTime,
+    avgLatencyMs: newAvg,
+    errors: errorMsg
+      ? [{ message: errorMsg, time: new Date() }, ...prev.errors].slice(0, 3)
+      : prev.errors,
+    yahooStatus: success ? "online" : "error",
+  };
+}
+
+interface PortfolioState {
+  // Data State
+  transactions: Transaction[];
+  holdings: PortfolioHolding[];
+  quotes: MarketQuote[];
+  fxRates: FxRates;
+  baseCurrency: SupportedCurrency;
+  
+  // Calculated State
+  portfolioValue: number;
+  totalCost: number;
+  
+  // Dividend State
+  dividendEvents: DividendEvent[];
+  monthlyDividends: MonthlyDividend[];
+  dividendStats: DividendStats;
+  topPayers: TopPayer[];
+
+  // API State
+  isLoadingMarket: boolean;
+  apiStats: ApiStat;
+
+  // Actions
+  setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
+  loadTransactions: () => Promise<Transaction[]>;
+  fetchMarketData: (txs?: Transaction[]) => Promise<void>;
+  resetApiStats: () => void;
+}
+
+export const usePortfolioStore = create<PortfolioState>()(
+  persist(
+    (set, get) => ({
+      // Initial Data State
+      transactions: [],
+      holdings: [],
+      quotes: [],
+      fxRates: { PLN: 1.0 },
+      baseCurrency: "PLN", // Default, will be overwritten by persist
+      
+      // Initial Calculated State
+      portfolioValue: 0,
+      totalCost: 0,
+      
+      // Initial Dividend State
+      dividendEvents: [],
+      monthlyDividends: [],
+      dividendStats: {
+        annualIncome: 0,
+        yield: 0,
+        yieldOnCost: 0,
+      },
+      topPayers: [],
+
+      // API State
+      isLoadingMarket: false,
+      apiStats: initialApiStats,
+
+      // Actions
+      resetApiStats: () => set({ apiStats: initialApiStats }),
+      setBaseCurrency: async (currency: SupportedCurrency) => {
+        set({ baseCurrency: currency });
+        // After setting currency, automatically fetch new rates and recalculate
+        await get().fetchMarketData();
+      },
+
+      loadTransactions: async () => {
+        try {
+          const db = await Database.load("sqlite:portfolio.db");
+          const result = await db.select<Transaction[]>(
+            "SELECT * FROM transactions ORDER BY id DESC"
+          );
+          set({ transactions: result });
+          return result;
+        } catch (error) {
+          console.error("Failed to load transactions:", error);
+          return [];
+        }
+      },
+
+      fetchMarketData: async (overrideTxs?: Transaction[]) => {
+        set({ isLoadingMarket: true });
+        
+        try {
+          const state = get();
+          const txs = overrideTxs || state.transactions;
+          const currentBaseCurrency = state.baseCurrency;
+
+          const currentHoldings = aggregateHoldings(txs);
+          set({ holdings: currentHoldings });
+
+          if (currentHoldings.length === 0) {
+            set({
+              quotes: [],
+              portfolioValue: 0,
+              totalCost: 0,
+              isLoadingMarket: false
+            });
+            return;
+          }
+
+          const symbols = Array.from(new Set(txs.map(t => t.symbol)));
+
+          // Fetch Market Quotes and FX Rates (1 combined call)
+          let marketQuotes: MarketQuote[] = state.quotes;
+          let rates: FxRates = state.fxRates;
+          const t0 = Date.now();
+          try {
+             const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
+             marketQuotes = data.market_quotes;
+             rates = data.fx_rates;
+             set({ 
+               quotes: marketQuotes, 
+               fxRates: rates,
+               apiStats: applyCallResult(get().apiStats, true, Date.now() - t0)
+             });
+          } catch (error) {
+             const msg = `[Combined] ${String(error).slice(0, 120)}`;
+             set({ apiStats: applyCallResult(get().apiStats, false, Date.now() - t0, msg) });
+             console.error("Failed to fetch combined market data:", error);
+          }
+
+          // Fetch Dividend Events
+          let events: DividendEvent[] = state.dividendEvents;
+          try {
+             events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
+             set({ dividendEvents: events });
+          } catch (error) {
+             console.error("Failed to fetch dividend history:", error);
+          }
+
+          // Run Calculations
+          const pValue = calculatePortfolioValue(currentHoldings, marketQuotes, rates);
+          const tCost = calculateTotalCost(currentHoldings, rates);
+          set({ portfolioValue: pValue, totalCost: tCost });
+
+          const divRes = calculateDividends(
+            txs,
+            events,
+            rates,
+            currentBaseCurrency,
+            pValue,
+            tCost,
+            currentHoldings,
+            marketQuotes
+          );
+
+          set({
+            monthlyDividends: divRes.monthlyData,
+            dividendStats: divRes.stats,
+            topPayers: divRes.topPayers,
+          });
+
+        } finally {
+          set({ isLoadingMarket: false });
+        }
+      },
+    }),
+    {
+      name: "portfolio-storage",
+      storage: createJSONStorage(() => localStorage),
+      // Partialize to only persist data, not ephemeral loading states
+      partialize: (state) => ({
+        transactions: state.transactions,
+        holdings: state.holdings,
+        quotes: state.quotes,
+        fxRates: state.fxRates,
+        baseCurrency: state.baseCurrency,
+        portfolioValue: state.portfolioValue,
+        totalCost: state.totalCost,
+        dividendEvents: state.dividendEvents,
+        monthlyDividends: state.monthlyDividends,
+        dividendStats: state.dividendStats,
+        topPayers: state.topPayers,
+        apiStats: state.apiStats,
+      }),
+    }
+  )
+);

@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Transaction } from "../services/marketData";
 import { Pencil, Trash2 } from "lucide-react";
 
+import { usePortfolioStore } from "../store/usePortfolioStore";
+import Database from "@tauri-apps/plugin-sql";
+
 interface HistoryPageProps {
-  transactions: Transaction[];
   onEdit: (tx: Transaction) => void;
-  onDelete: (id: number) => void;
 }
 
 const tableHeaderStyle: React.CSSProperties = {
@@ -26,17 +27,27 @@ const tableCellStyle: React.CSSProperties = {
   borderBottom: "1px solid #1f1f1f",
 };
 
-export function HistoryPage({ transactions, onEdit, onDelete }: HistoryPageProps) {
+export function HistoryPage({ onEdit }: HistoryPageProps) {
+  const { transactions, loadTransactions, fetchMarketData } = usePortfolioStore();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleDeleteClick = (id: number) => {
     setDeleteTargetId(id);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteTargetId !== null) {
-      onDelete(deleteTargetId);
-      setDeleteTargetId(null);
+      try {
+        const db = await Database.load("sqlite:portfolio.db");
+        await db.execute("DELETE FROM transactions WHERE id = $1", [deleteTargetId]);
+        await loadTransactions();
+        await fetchMarketData();
+      } catch (error) {
+        console.error("Failed to delete transaction:", error);
+        alert("Failed to delete transaction.");
+      } finally {
+        setDeleteTargetId(null);
+      }
     }
   };
 

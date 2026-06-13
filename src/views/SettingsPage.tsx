@@ -2,16 +2,7 @@ import { useState } from "react";
 import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity } from "lucide-react";
 import Database from "@tauri-apps/plugin-sql";
 import { SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../services/marketData";
-import { type ApiStat } from "../types/apiStats";
-
-interface SettingsPageProps {
-  onPortfolioReset?: () => void;
-  baseCurrency: SupportedCurrency;
-  onBaseCurrencyChange: (currency: SupportedCurrency) => void;
-  apiStats: ApiStat;
-  onForceRefresh: () => Promise<void>;
-  onResetStats: () => void;
-}
+import { usePortfolioStore } from "../store/usePortfolioStore";
 
 type ResetStep = "idle" | "confirm-text" | "final-warning";
 
@@ -47,14 +38,15 @@ function formatTime(date: Date | null): string {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function SettingsPage({
-  onPortfolioReset,
-  baseCurrency,
-  onBaseCurrencyChange,
-  apiStats,
-  onForceRefresh,
-  onResetStats,
-}: SettingsPageProps) {
+export function SettingsPage() {
+  const {
+    baseCurrency,
+    setBaseCurrency,
+    apiStats,
+    resetApiStats,
+    loadTransactions,
+    fetchMarketData,
+  } = usePortfolioStore();
   const [resetStep, setResetStep] = useState<ResetStep>("idle");
   const [confirmInput, setConfirmInput] = useState("");
   const [isResetting, setIsResetting] = useState(false);
@@ -70,7 +62,8 @@ export function SettingsPage({
     try {
       const db = await Database.load("sqlite:portfolio.db");
       await db.execute("DELETE FROM transactions");
-      onPortfolioReset?.();
+      await loadTransactions();
+      await fetchMarketData();
       setResetStep("idle");
       setConfirmInput("");
     } catch (error) {
@@ -83,7 +76,7 @@ export function SettingsPage({
   const handleForceRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await onForceRefresh();
+      await fetchMarketData();
     } finally {
       setIsRefreshing(false);
     }
@@ -121,7 +114,7 @@ export function SettingsPage({
               <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
               <select
                 value={baseCurrency}
-                onChange={(e) => onBaseCurrencyChange(e.target.value as SupportedCurrency)}
+                onChange={(e) => setBaseCurrency(e.target.value as SupportedCurrency)}
                 className="appearance-none rounded-lg pl-3 pr-8 py-2 text-sm font-mono cursor-pointer focus:outline-none transition-colors"
                 style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#ffffff", minWidth: "110px" }}
               >
@@ -213,7 +206,7 @@ export function SettingsPage({
               {/* Action Buttons */}
               <div className="flex gap-3 pt-1">
                 <button
-                  onClick={onResetStats}
+                  onClick={resetApiStats}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                   style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#a3a3a3" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "#404040"; }}

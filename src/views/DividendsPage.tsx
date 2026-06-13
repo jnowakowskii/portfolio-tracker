@@ -7,16 +7,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { MonthlyDividend, DividendStats, TopPayer } from "../services/dividendLogic";
+import { usePortfolioStore } from "../store/usePortfolioStore";
 
-interface DividendsPageProps {
-  monthlyDividends: MonthlyDividend[];
-  dividendStats: DividendStats;
-  topPayers?: TopPayer[];
-  baseCurrency: string;
-}
-
-export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [], baseCurrency }: DividendsPageProps) {
+export function DividendsPage() {
+  const { monthlyDividends, dividendStats, topPayers, baseCurrency } = usePortfolioStore();
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">

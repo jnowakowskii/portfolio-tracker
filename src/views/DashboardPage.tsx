@@ -1,17 +1,7 @@
 import { Wallet, PieChart, Activity } from "lucide-react";
 import { SummaryCard } from "../components/ui/SummaryCard";
-import { CURRENCY_SYMBOLS, type MarketQuote, type PortfolioHolding, type Transaction, type FxRates, type SupportedCurrency } from "../services/marketData";
-
-interface DashboardPageProps {
-  transactions: Transaction[];
-  holdings: PortfolioHolding[];
-  quotes: MarketQuote[];
-  fxRates: FxRates;
-  baseCurrency: SupportedCurrency;
-  portfolioValue: number;
-  totalCost: number;
-  isLoadingMarket: boolean;
-}
+import { CURRENCY_SYMBOLS } from "../services/marketData";
+import { usePortfolioStore } from "../store/usePortfolioStore";
 
 function formatCurrency(value: number, symbol: string): string {
   const abs = Math.abs(value);
@@ -19,9 +9,18 @@ function formatCurrency(value: number, symbol: string): string {
   return `${value < 0 ? "-" : ""}${formatted} ${symbol}`;
 }
 
-export function DashboardPage({
-  transactions, holdings, quotes, fxRates, baseCurrency, portfolioValue, totalCost, isLoadingMarket,
-}: DashboardPageProps) {
+export function DashboardPage() {
+  const {
+    transactions,
+    holdings,
+    quotes,
+    fxRates,
+    baseCurrency,
+    portfolioValue,
+    totalCost,
+    isLoadingMarket,
+  } = usePortfolioStore();
+
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
   const baseRate = fxRates[baseCurrency] ?? 1.0;
   const displayPortfolioValue = portfolioValue / baseRate;

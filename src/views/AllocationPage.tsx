@@ -1,14 +1,8 @@
 import { useMemo } from "react";
 import { PieChart as PieChartIcon } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { CURRENCY_SYMBOLS, type MarketQuote, type PortfolioHolding, type FxRates, type SupportedCurrency } from "../services/marketData";
-
-interface AllocationPageProps {
-  holdings: PortfolioHolding[];
-  quotes: MarketQuote[];
-  fxRates: FxRates;
-  baseCurrency: SupportedCurrency;
-}
+import { CURRENCY_SYMBOLS } from "../services/marketData";
+import { usePortfolioStore } from "../store/usePortfolioStore";
 
 const COLORS = [
   "#60A5FA", "#A78BFA", "#2DD4BF", "#FBBF24", "#FB7185",
@@ -38,7 +32,8 @@ const panelHeader: React.CSSProperties = {
   borderBottom: "1px solid #262626",
 };
 
-export function AllocationPage({ holdings, quotes, fxRates, baseCurrency }: AllocationPageProps) {
+export function AllocationPage() {
+  const { holdings, quotes, fxRates, baseCurrency } = usePortfolioStore();
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
   const baseRate = fxRates[baseCurrency] ?? 1.0;
 

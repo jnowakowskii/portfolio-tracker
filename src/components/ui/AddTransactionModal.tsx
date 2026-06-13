@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import Database from "@tauri-apps/plugin-sql";
 import { X, Search, Hash, Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight, Globe } from "lucide-react";
 import { Transaction, SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency, SymbolSearchResult, searchSymbols } from "../../services/marketData";
+import { usePortfolioStore } from "../../store/usePortfolioStore";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
   editData?: Transaction | null;
 }
 
@@ -238,7 +238,7 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
   return "globe";
 }
 
-export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTransactionModalProps) {
+export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactionModalProps) {
   const [symbol, setSymbol] = useState("");
   const [side, setSide] = useState("BUY");
   const [quantity, setQuantity] = useState("");
@@ -350,7 +350,8 @@ export function AddTransactionModal({ isOpen, onClose, onSave, editData }: AddTr
         );
       }
 
-      onSave();
+      await usePortfolioStore.getState().loadTransactions();
+      await usePortfolioStore.getState().fetchMarketData();
       onClose();
     } catch (error) {
       console.error("Failed to add transaction:", error);
