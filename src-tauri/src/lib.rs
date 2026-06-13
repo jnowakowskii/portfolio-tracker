@@ -14,6 +14,32 @@ struct YahooAuth {
 // ── Yahoo Finance response types ───────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
+struct YahooChartResponse {
+    chart: YahooChartResult,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooChartResult {
+    result: Option<Vec<YahooChartData>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooChartData {
+    events: Option<YahooChartEvents>,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooChartEvents {
+    dividends: Option<HashMap<String, YahooDividendData>>,
+}
+
+#[derive(Debug, Deserialize)]
+struct YahooDividendData {
+    amount: f64,
+    date: i64,
+}
+
+#[derive(Debug, Deserialize)]
 struct YahooQuoteResponse {
     #[serde(rename = "quoteResponse")]
     quote_response: YahooQuoteResult,
@@ -38,6 +64,13 @@ struct YahooQuote {
 }
 
 // ── Public return types ────────────────────────────────────────────────
+
+#[derive(Debug, Serialize, Clone)]
+pub struct DividendEvent {
+    pub symbol: String,
+    pub amount: f64,
+    pub date: i64,
+}
 
 #[derive(Debug, Serialize, Clone)]
 pub struct MarketQuote {
@@ -278,6 +311,93 @@ async fn fetch_quotes(
 }
 
 #[tauri::command]
+async fn get_dividend_history(
+    symbols: Vec<String>,
+    auth: State<'_, YahooAuth>,
+) -> Result<Vec<DividendEvent>, String> {
+    let mut unique_symbols = symbols.clone();
+    unique_symbols.sort();
+    unique_symbols.dedup();
+
+    let (mut crumb, mut cookie) = ensure_auth(&auth).await?;
+    let mut all_dividends = Vec::new();
+
+    for symbol in unique_symbols {
+        if symbol.contains("=X") {
+            continue;
+        }
+
+        let mut result = fetch_dividends(&symbol, &crumb, &cookie).await;
+
+        if result.is_err() {
+            if let Ok((new_crumb, new_cookie)) = refresh_auth(&auth).await {
+                crumb = new_crumb;
+                cookie = new_cookie;
+                result = fetch_dividends(&symbol, &crumb, &cookie).await;
+            }
+        }
+
+        if let Ok(divs) = result {
+            all_dividends.extend(divs);
+        }
+    }
+
+    Ok(all_dividends)
+}
+
+async fn fetch_dividends(
+    symbol: &str,
+    crumb: &str,
+    cookie: &str,
+) -> Result<Vec<DividendEvent>, String> {
+    let url = format!(
+        "https://query2.finance.yahoo.com/v8/finance/chart/{}?interval=1d&range=5y&events=div&crumb={}",
+        symbol, crumb
+    );
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get(&url)
+        .header("cookie", cookie)
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Yahoo API returned status {}", response.status()));
+    }
+
+    let data: YahooChartResponse = match response.json().await {
+        Ok(d) => d,
+        Err(_) => return Ok(vec![]),
+    };
+
+    let mut dividends = Vec::new();
+    if let Some(results) = data.chart.result {
+        if let Some(first_result) = results.first() {
+            if let Some(events) = &first_result.events {
+                if let Some(divs) = &events.dividends {
+                    for div in divs.values() {
+                        dividends.push(DividendEvent {
+                            symbol: symbol.to_string(),
+                            amount: div.amount,
+                            date: div.date,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    dividends.sort_by_key(|d| d.date);
+    Ok(dividends)
+}
+
+#[tauri::command]
 async fn search_symbols(query: String) -> Result<Vec<SymbolSearchResult>, String> {
     if query.trim().is_empty() {
         return Ok(vec![]);
@@ -365,7 +485,7 @@ pub fn run() {
                 .add_migrations("sqlite:portfolio.db", migrations)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data, search_symbols])
+        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data, search_symbols, get_dividend_history])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
