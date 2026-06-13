@@ -229,16 +229,7 @@ function App() {
     }
   }, [fetchMarketDataTracked, recalculateDividends, baseCurrency]);
 
-  // When baseCurrency changes, recalculate from cached data — NO Yahoo calls
-  useEffect(() => {
-    if (holdings.length === 0 || quotes.length === 0) return;
-    const pValue = calculatePortfolioValue(holdings, quotes, fxRates);
-    const tCost = calculateTotalCost(holdings, fxRates);
-    setPortfolioValue(pValue);
-    setTotalCost(tCost);
-    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency, pValue, tCost, holdings, quotes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseCurrency]);
+
 
   // ── Boot sequence ─────────────────────────────────────────────────────────────────────
   //
@@ -315,6 +306,16 @@ function App() {
       setIsLoadingMarket(false);
     }
   }, [fetchCombinedTracked, applyMarketData, recalculateDividends, baseCurrency]);
+
+  const prevBaseCurrencyRef = useRef(baseCurrency);
+  useEffect(() => {
+    if (prevBaseCurrencyRef.current === baseCurrency) return;
+    prevBaseCurrencyRef.current = baseCurrency;
+    
+    if (hasInitialized.current) {
+      handleForceRefresh();
+    }
+  }, [baseCurrency, handleForceRefresh]);
 
   /** Persist and apply a new base currency (no Yahoo calls). */
   const handleBaseCurrencyChange = (currency: SupportedCurrency) => {
@@ -394,6 +395,7 @@ function App() {
             monthlyDividends={monthlyDividends}
             dividendStats={dividendStats}
             topPayers={topPayers}
+            baseCurrency={baseCurrency}
           />
         );
       default: {

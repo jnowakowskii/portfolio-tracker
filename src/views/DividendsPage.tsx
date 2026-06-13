@@ -13,9 +13,10 @@ interface DividendsPageProps {
   monthlyDividends: MonthlyDividend[];
   dividendStats: DividendStats;
   topPayers?: TopPayer[];
+  baseCurrency: string;
 }
 
-export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [] }: DividendsPageProps) {
+export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [], baseCurrency }: DividendsPageProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
@@ -61,11 +62,11 @@ export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [] 
                   }}
                   itemStyle={{ color: "#f5f5f5" }}
                   formatter={(value: any) => [
-                    value.toLocaleString(undefined, {
+                    `${Number(value).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    }),
-                    "Amount"
+                    })} ${baseCurrency}`,
+                    "Income"
                   ]}
                 />
                 <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -82,7 +83,7 @@ export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [] 
               {dividendStats.annualIncome.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
-              })}
+              })} {baseCurrency}
             </p>
           </div>
           <div>
@@ -130,7 +131,7 @@ export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [] 
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-neutral-100 font-semibold">
-                      {payer.annualAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {payer.annualAmountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payer.currency}
                     </span>
                     <div className="flex space-x-2 text-xs text-neutral-500">
                       <span>Yield: {payer.yield.toFixed(2)}%</span>

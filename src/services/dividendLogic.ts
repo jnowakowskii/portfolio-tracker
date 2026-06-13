@@ -22,6 +22,8 @@ export interface TopPayer {
   name: string;
   totalAmount: number;
   annualAmount: number;
+  annualAmountNative: number;
+  currency: string;
   yield: number;
   yieldOnCost: number;
 }
@@ -72,6 +74,7 @@ export function calculateDividends(
 
   const payoutsPerSymbol = new Map<string, number>();
   const annualPerSymbol = new Map<string, number>();
+  const annualPerSymbolNative = new Map<string, number>();
   const oneYearAgoMs = now.getTime() - 365 * 24 * 60 * 60 * 1000;
 
   for (const event of dividendEvents) {
@@ -110,6 +113,7 @@ export function calculateDividends(
 
         annualIncome += payoutBase;
         annualPerSymbol.set(event.symbol, (annualPerSymbol.get(event.symbol) || 0) + payoutBase);
+        annualPerSymbolNative.set(event.symbol, (annualPerSymbolNative.get(event.symbol) || 0) + payoutLocal);
 
         const eventDate = new Date(eventDateMs);
         const monthIndex = eventDate.getMonth();
@@ -154,6 +158,8 @@ export function calculateDividends(
         name,
         totalAmount,
         annualAmount,
+        annualAmountNative: annualPerSymbolNative.get(symbol) || 0,
+        currency: quote?.currency || currencyMap.get(symbol) || baseCurrency,
         yield: symYield,
         yieldOnCost: symYoc,
       };
