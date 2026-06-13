@@ -6,8 +6,10 @@ import { AllocationPage } from "./views/AllocationPage";
 import { PlaceholderPage } from "./views/PlaceholderPage";
 import { SettingsPage } from "./views/SettingsPage";
 import { HistoryPage } from "./views/HistoryPage";
+import { DividendsPage } from "./views/DividendsPage"; // We'll assume DividendsPage is created later
 import { NAV_ITEMS } from "./config/navigation";
 import Database from "@tauri-apps/plugin-sql";
+import { invoke } from "@tauri-apps/api/core";
 import {
   getCombinedDataRaw,
   getMarketDataRaw,
@@ -21,6 +23,12 @@ import {
   type SupportedCurrency,
 } from "./services/marketData";
 import { type ApiStat, initialApiStats } from "./types/apiStats";
+import {
+  calculateDividends,
+  type DividendEvent,
+  type MonthlyDividend,
+  type DividendStats,
+} from "./services/dividendLogic";
 
 // ── Stat helper ───────────────────────────────────────────────────────────────
 
@@ -67,12 +75,24 @@ function App() {
   const [totalCost, setTotalCost] = useState(0);
   const [isLoadingMarket, setIsLoadingMarket] = useState(false);
 
+  // Dividend Data
+  const [dividendEvents, setDividendEvents] = useState<DividendEvent[]>([]);
+  const [monthlyDividends, setMonthlyDividends] = useState<MonthlyDividend[]>([]);
+  const [dividendStats, setDividendStats] = useState<DividendStats>({
+    annualIncome: 0,
+    yield: 0,
+    yieldOnCost: 0,
+  });
+
   // API diagnostics
   const [apiStats, setApiStats] = useState<ApiStat>(initialApiStats);
 
   // Stable ref so callbacks always see the latest fxRates without creating stale closures
   const fxRatesRef = useRef<FxRates>({ PLN: 1.0 });
   useEffect(() => { fxRatesRef.current = fxRates; }, [fxRates]);
+
+  const dividendEventsRef = useRef<DividendEvent[]>([]);
+  useEffect(() => { dividendEventsRef.current = dividendEvents; }, [dividendEvents]);
 
   // Prevents React 18 Strict Mode from double-firing the boot effect in dev
   const hasInitialized = useRef(false);
@@ -154,6 +174,17 @@ function App() {
     }
   }, []);
 
+  const recalculateDividends = useCallback((
+    txs: Transaction[],
+    events: DividendEvent[],
+    rates: FxRates,
+    currency: string
+  ) => {
+    const res = calculateDividends(txs, events, rates, currency);
+    setMonthlyDividends(res.monthlyData);
+    setDividendStats(res.stats);
+  }, []);
+
   /**
    * Market-only reload (after a transaction change). Uses cached FX rates.
    * Makes exactly 1 Yahoo call for ticker quotes.
@@ -179,16 +210,20 @@ function App() {
       setQuotes(marketQuotes);
       setPortfolioValue(calculatePortfolioValue(currentHoldings, marketQuotes, rates));
       setTotalCost(calculateTotalCost(currentHoldings, rates));
+      
+      // Recalculate dividends with existing events but new transactions/prices
+      recalculateDividends(txs, dividendEventsRef.current, rates, baseCurrency);
     } finally {
       setIsLoadingMarket(false);
     }
-  }, [fetchMarketDataTracked]);
+  }, [fetchMarketDataTracked, recalculateDividends, baseCurrency]);
 
   // When baseCurrency changes, recalculate from cached data — NO Yahoo calls
   useEffect(() => {
     if (holdings.length === 0 || quotes.length === 0) return;
     setPortfolioValue(calculatePortfolioValue(holdings, quotes, fxRates));
     setTotalCost(calculateTotalCost(holdings, fxRates));
+    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseCurrency]);
 
@@ -212,6 +247,17 @@ function App() {
         setFxRates(rates);
         fxRatesRef.current = rates;
         applyMarketData(txs, marketQuotes, rates);
+
+        // Fetch dividends right after combined data
+        try {
+          const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
+          setDividendEvents(events);
+          dividendEventsRef.current = events;
+          recalculateDividends(txs, events, rates, baseCurrency);
+        } catch (e) {
+          console.error("Failed to fetch dividend history:", e);
+        }
+
       } finally {
         setIsLoadingMarket(false);
       }
@@ -242,10 +288,20 @@ function App() {
       setFxRates(rates);
       fxRatesRef.current = rates;
       applyMarketData(txs, marketQuotes, rates);
+
+      // Fetch dividends right after combined data
+      try {
+        const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
+        setDividendEvents(events);
+        dividendEventsRef.current = events;
+        recalculateDividends(txs, events, rates, baseCurrency);
+      } catch (e) {
+        console.error("Failed to fetch dividend history:", e);
+      }
     } finally {
       setIsLoadingMarket(false);
     }
-  }, [fetchCombinedTracked, applyMarketData]);
+  }, [fetchCombinedTracked, applyMarketData, recalculateDividends, baseCurrency]);
 
   /** Persist and apply a new base currency (no Yahoo calls). */
   const handleBaseCurrencyChange = (currency: SupportedCurrency) => {
@@ -317,6 +373,13 @@ function App() {
             transactions={transactions}
             onEdit={handleEditTransaction}
             onDelete={handleDeleteTransaction}
+          />
+        );
+      case "dividends":
+        return (
+          <DividendsPage
+            monthlyDividends={monthlyDividends}
+            dividendStats={dividendStats}
           />
         );
       default: {
