@@ -1,9 +1,10 @@
 import { ReactNode } from "react";
-import { Plus, Minus, X } from "lucide-react";
+import { Plus, Minus, X, RefreshCw } from "lucide-react";
 import { NavItem } from "../components/ui/NavItem";
 import { NAV_ITEMS } from "../config/navigation";
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import logoUrl from "../assets/logo.png";
+import { usePortfolioStore } from "../store/usePortfolioStore";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeTab, setActiveTab, onAddTransactionClick }: MainLayoutProps) {
   const appWindow = getCurrentWindow();
+  const { isLoadingMarket } = usePortfolioStore();
 
   const topItems = NAV_ITEMS.filter(item => !item.bottom);
   const bottomItems = NAV_ITEMS.filter(item => item.bottom);
@@ -35,6 +37,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             <img src={logoUrl} alt="Callisto logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Callisto</span>
+          {isLoadingMarket && <RefreshCw size={14} className="text-neutral-500 animate-spin ml-2" />}
         </div>
 
         {/* Center Section: Navigation */}

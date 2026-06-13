@@ -18,7 +18,6 @@ export function DashboardPage() {
     baseCurrency,
     portfolioValue,
     totalCost,
-    isLoadingMarket,
   } = usePortfolioStore();
 
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
@@ -43,10 +42,10 @@ export function DashboardPage() {
     return totalW > 0 ? weightedSum / totalW : 0;
   })();
 
-  const displayValue = isLoadingMarket ? "-" : formatCurrency(displayPortfolioValue, baseSymbol);
-  const displayChange = isLoadingMarket ? "-" : `${weightedDailyChange >= 0 ? "+" : ""}${weightedDailyChange.toFixed(2)}% today`;
-  const displayPL = isLoadingMarket ? "-" : `${unrealizedPL >= 0 ? "+" : ""}${formatCurrency(unrealizedPL, baseSymbol)}`;
-  const displayPLPct = isLoadingMarket ? "-" : `${unrealizedPLPercent >= 0 ? "+" : ""}${unrealizedPLPercent.toFixed(1)}%`;
+  const displayValue = formatCurrency(displayPortfolioValue, baseSymbol);
+  const displayChange = `${weightedDailyChange >= 0 ? "+" : ""}${weightedDailyChange.toFixed(2)}% today`;
+  const displayPL = `${unrealizedPL >= 0 ? "+" : ""}${formatCurrency(unrealizedPL, baseSymbol)}`;
+  const displayPLPct = `${unrealizedPLPercent >= 0 ? "+" : ""}${unrealizedPLPercent.toFixed(1)}%`;
 
   return (
     <>
