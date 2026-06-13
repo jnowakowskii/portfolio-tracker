@@ -350,8 +350,14 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
         );
       }
 
-      await usePortfolioStore.getState().loadTransactions();
-      await usePortfolioStore.getState().fetchMarketData();
+      const store = usePortfolioStore.getState();
+      await store.loadTransactions();
+
+      const isNewTicker = !store.quotes.some(q => q.symbol === finalSymbol);
+      if (isNewTicker) {
+        store.fetchMarketData();
+      }
+
       onClose();
     } catch (error) {
       console.error("Failed to add transaction:", error);

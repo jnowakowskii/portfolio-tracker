@@ -118,6 +118,40 @@ export const usePortfolioStore = create<PortfolioState>()(
             "SELECT * FROM transactions ORDER BY id DESC"
           );
           set({ transactions: result });
+
+          const state = get();
+          const currentHoldings = aggregateHoldings(result);
+          set({ holdings: currentHoldings });
+
+          if (currentHoldings.length === 0) {
+            set({
+              portfolioValue: 0,
+              totalCost: 0,
+            });
+            return result;
+          }
+
+          const pValue = calculatePortfolioValue(currentHoldings, state.quotes, state.fxRates);
+          const tCost = calculateTotalCost(currentHoldings, state.fxRates);
+          set({ portfolioValue: pValue, totalCost: tCost });
+
+          const divRes = calculateDividends(
+            result,
+            state.dividendEvents,
+            state.fxRates,
+            state.baseCurrency,
+            pValue,
+            tCost,
+            currentHoldings,
+            state.quotes
+          );
+
+          set({
+            monthlyDividends: divRes.monthlyData,
+            dividendStats: divRes.stats,
+            topPayers: divRes.topPayers,
+          });
+
           return result;
         } catch (error) {
           console.error("Failed to load transactions:", error);

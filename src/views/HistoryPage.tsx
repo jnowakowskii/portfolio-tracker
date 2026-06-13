@@ -28,7 +28,7 @@ const tableCellStyle: React.CSSProperties = {
 };
 
 export function HistoryPage({ onEdit }: HistoryPageProps) {
-  const { transactions, loadTransactions, fetchMarketData } = usePortfolioStore();
+  const { transactions, loadTransactions } = usePortfolioStore();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleDeleteClick = (id: number) => {
@@ -41,7 +41,6 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
         const db = await Database.load("sqlite:portfolio.db");
         await db.execute("DELETE FROM transactions WHERE id = $1", [deleteTargetId]);
         await loadTransactions();
-        await fetchMarketData();
       } catch (error) {
         console.error("Failed to delete transaction:", error);
         alert("Failed to delete transaction.");
