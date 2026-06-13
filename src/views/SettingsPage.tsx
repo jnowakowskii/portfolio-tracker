@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity } from "lucide-react";
 import Database from "@tauri-apps/plugin-sql";
 import { SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../services/marketData";
@@ -52,6 +52,16 @@ export function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const lastFetchMs = apiStats.lastFetchTime ? new Date(apiStats.lastFetchTime).getTime() : 0;
+  const cooldownRemaining = Math.max(0, 180000 - (now - lastFetchMs));
+  const canRefresh = cooldownRemaining === 0;
 
   const handleResetClick = () => { setResetStep("confirm-text"); setConfirmInput(""); };
   const handleConfirmText = () => { if (confirmInput === "CONFIRM") setResetStep("final-warning"); };
@@ -217,14 +227,14 @@ export function SettingsPage() {
                 </button>
                 <button
                   onClick={handleForceRefresh}
-                  disabled={isRefreshing}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  disabled={isRefreshing || !canRefresh}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: "#ffffff", border: "1px solid #ffffff", color: "#0a0a0a" }}
-                  onMouseEnter={e => { if (!isRefreshing) { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; } }}
+                  onMouseEnter={e => { if (!isRefreshing && canRefresh) { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; } }}
                   onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
                 >
                   <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
-                  {isRefreshing ? "Refreshing…" : "Refresh Data"}
+                  {isRefreshing ? "Refreshing…" : !canRefresh ? `Wait ${Math.ceil(cooldownRemaining / 1000)}s` : "Refresh Data"}
                 </button>
               </div>
             </div>
