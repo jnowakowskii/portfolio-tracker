@@ -21,6 +21,7 @@ export interface TopPayer {
   symbol: string;
   name: string;
   totalAmount: number;
+  annualAmount: number;
   yield: number;
   yieldOnCost: number;
 }
@@ -152,11 +153,12 @@ export function calculateDividends(
         symbol,
         name,
         totalAmount,
+        annualAmount,
         yield: symYield,
         yieldOnCost: symYoc,
       };
     })
-    .sort((a, b) => b.totalAmount - a.totalAmount)
+    .sort((a, b) => b.annualAmount - a.annualAmount)
     .slice(0, 5);
 
   return {
