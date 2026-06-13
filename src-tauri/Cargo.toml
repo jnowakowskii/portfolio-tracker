@@ -1,6 +1,6 @@
 [package]
 name = "portfolio-tracker"
-version = "0.1.0"
+version = "0.2.1"
 description = "Callisto Portfolio Tracker"
 authors = ["Jakub Nowakowski"]
 edition = "2021"
