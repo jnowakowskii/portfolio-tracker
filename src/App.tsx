@@ -28,6 +28,7 @@ import {
   type DividendEvent,
   type MonthlyDividend,
   type DividendStats,
+  type TopPayer,
 } from "./services/dividendLogic";
 
 // ── Stat helper ───────────────────────────────────────────────────────────────
@@ -83,6 +84,7 @@ function App() {
     yield: 0,
     yieldOnCost: 0,
   });
+  const [topPayers, setTopPayers] = useState<TopPayer[]>([]);
 
   // API diagnostics
   const [apiStats, setApiStats] = useState<ApiStat>(initialApiStats);
@@ -182,11 +184,14 @@ function App() {
     rates: FxRates,
     currency: string,
     pValue: number,
-    tCost: number
+    tCost: number,
+    currentHoldings: PortfolioHolding[],
+    currentQuotes: MarketQuote[]
   ) => {
-    const res = calculateDividends(txs, events, rates, currency, pValue, tCost);
+    const res = calculateDividends(txs, events, rates, currency, pValue, tCost, currentHoldings, currentQuotes);
     setMonthlyDividends(res.monthlyData);
     setDividendStats(res.stats);
+    setTopPayers(res.topPayers);
   }, []);
 
   /**
@@ -218,7 +223,7 @@ function App() {
       setTotalCost(tCost);
 
       // Recalculate dividends with existing events but new transactions/prices
-      recalculateDividends(txs, dividendEventsRef.current, rates, baseCurrency, pValue, tCost);
+      recalculateDividends(txs, dividendEventsRef.current, rates, baseCurrency, pValue, tCost, currentHoldings, marketQuotes);
     } finally {
       setIsLoadingMarket(false);
     }
@@ -231,7 +236,7 @@ function App() {
     const tCost = calculateTotalCost(holdings, fxRates);
     setPortfolioValue(pValue);
     setTotalCost(tCost);
-    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency, pValue, tCost);
+    recalculateDividends(transactions, dividendEvents, fxRates, baseCurrency, pValue, tCost, holdings, quotes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseCurrency]);
 
@@ -261,7 +266,7 @@ function App() {
           const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
           setDividendEvents(events);
           dividendEventsRef.current = events;
-          recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost);
+          recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost, aggregateHoldings(txs), marketQuotes);
         } catch (e) {
           console.error("Failed to fetch dividend history:", e);
         }
@@ -302,7 +307,7 @@ function App() {
         const events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
         setDividendEvents(events);
         dividendEventsRef.current = events;
-        recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost);
+        recalculateDividends(txs, events, rates, baseCurrency, pValue, tCost, aggregateHoldings(txs), marketQuotes);
       } catch (e) {
         console.error("Failed to fetch dividend history:", e);
       }
@@ -388,6 +393,7 @@ function App() {
           <DividendsPage
             monthlyDividends={monthlyDividends}
             dividendStats={dividendStats}
+            topPayers={topPayers}
           />
         );
       default: {

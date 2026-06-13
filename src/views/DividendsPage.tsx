@@ -7,14 +7,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { MonthlyDividend, DividendStats } from "../services/dividendLogic";
+import { MonthlyDividend, DividendStats, TopPayer } from "../services/dividendLogic";
 
 interface DividendsPageProps {
   monthlyDividends: MonthlyDividend[];
   dividendStats: DividendStats;
+  topPayers?: TopPayer[];
 }
 
-export function DividendsPage({ monthlyDividends, dividendStats }: DividendsPageProps) {
+export function DividendsPage({ monthlyDividends, dividendStats, topPayers = [] }: DividendsPageProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
@@ -115,11 +116,34 @@ export function DividendsPage({ monthlyDividends, dividendStats }: DividendsPage
           </p>
         </div>
 
-        {/* Right Placeholder */}
-        <div className="lg:col-span-6 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex items-center justify-center min-h-[200px]">
-          <p className="text-neutral-400 text-sm font-medium">
-            Top Payers (Coming Soon)
-          </p>
+        {/* Right Card: Top Payers */}
+        <div className="lg:col-span-6 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex flex-col min-h-[200px]">
+          <h2 className="text-lg font-semibold text-neutral-100 mb-6">Top Payers</h2>
+          {topPayers.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-neutral-400 text-sm font-medium">No data yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4">
+              {topPayers.map((payer) => (
+                <div key={payer.symbol} className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-neutral-100 font-medium">{payer.symbol}</span>
+                    <span className="text-neutral-400 text-xs">{payer.name}</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-neutral-100 font-semibold">
+                      {payer.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <div className="flex space-x-2 text-xs text-neutral-400">
+                      <span>Yield: {payer.yield.toFixed(2)}%</span>
+                      <span>YoC: {payer.yieldOnCost.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { Transaction, FxRates } from "./marketData";
+import { Transaction, FxRates, PortfolioHolding, MarketQuote } from "./marketData";
 
 export interface DividendEvent {
   symbol: string;
@@ -17,10 +17,19 @@ export interface DividendStats {
   yieldOnCost: number;
 }
 
+export interface TopPayer {
+  symbol: string;
+  name: string;
+  totalAmount: number;
+  yield: number;
+  yieldOnCost: number;
+}
+
 export interface DividendCalculationResult {
   monthlyData: MonthlyDividend[];
   stats: DividendStats;
   totalAllTime: number;
+  topPayers: TopPayer[];
 }
 
 const MONTH_NAMES = [
@@ -34,79 +43,121 @@ export function calculateDividends(
   fxRates: FxRates,
   baseCurrency: string,
   portfolioValue: number,
-  totalCost: number
+  totalCost: number,
+  holdings: PortfolioHolding[],
+  quotes: MarketQuote[]
 ): DividendCalculationResult {
   let totalAllTime = 0;
-  let annualIncome = 0; // sum over the last 12 months
+  let annualIncome = 0; 
 
   const now = new Date();
-  const currentYear = now.getFullYear();
-
-  // Initialize current year's monthly data array
+  
   const monthlyData: MonthlyDividend[] = MONTH_NAMES.map(month => ({
     month,
     amount: 0,
   }));
 
-  // Create a map to quickly look up currency per symbol
-  // We assume all transactions for a given symbol share the same currency
+  // Map to store current currency and holdings per symbol
   const currencyMap = new Map<string, string>();
+  const currentHoldings = new Map<string, number>();
+
   for (const tx of transactions) {
     if (!currencyMap.has(tx.symbol)) {
       currencyMap.set(tx.symbol, tx.currency);
     }
+    const qty = tx.side === "BUY" ? tx.quantity : -tx.quantity;
+    currentHoldings.set(tx.symbol, (currentHoldings.get(tx.symbol) || 0) + qty);
   }
 
-  // Pre-sort transactions by date to optimize? The array of tx is probably small enough.
-  // We'll iterate events instead.
+  const payoutsPerSymbol = new Map<string, number>();
+  const annualPerSymbol = new Map<string, number>();
+  const oneYearAgoMs = now.getTime() - 365 * 24 * 60 * 60 * 1000;
+
   for (const event of dividendEvents) {
-    // Yahoo Finance returns dividend dates as unix timestamps in seconds.
-    // Convert to milliseconds for Date comparison.
     const eventDateMs = event.date * 1000;
-    const eventDate = new Date(eventDateMs);
     
-    // Filter transactions for this symbol that occurred before or on the dividend ex-date
-    let quantity = 0;
+    // 1. CHRONOLOGICAL REALITY (Total Earned All-Time & Top Payers)
+    let quantityAtExDate = 0;
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
-
       const txDateMs = new Date(tx.date).getTime();
       if (txDateMs <= eventDateMs) {
-        if (tx.side === "BUY") {
-          quantity += tx.quantity;
-        } else if (tx.side === "SELL") {
-          quantity -= tx.quantity;
-        }
+        if (tx.side === "BUY") quantityAtExDate += tx.quantity;
+        else if (tx.side === "SELL") quantityAtExDate -= tx.quantity;
       }
     }
 
-    if (quantity > 0) {
-      const payoutLocal = quantity * event.amount;
+    if (quantityAtExDate > 0) {
+      const payoutLocal = quantityAtExDate * event.amount;
       const currency = currencyMap.get(event.symbol) || baseCurrency;
       const fxRate = fxRates[currency] || 1.0;
-      
       const payoutBase = payoutLocal * fxRate;
 
-      // 1. Add to total all-time
       totalAllTime += payoutBase;
+      payoutsPerSymbol.set(event.symbol, (payoutsPerSymbol.get(event.symbol) || 0) + payoutBase);
+    }
 
-      // 2. Check if in current calendar year to fill monthly chart
-      if (eventDate.getFullYear() === currentYear) {
+    // 2. FORWARD PROJECTION (Projected Annual Income & Monthly Chart)
+    // Project the upcoming 12 months based on the last 365 days of events and CURRENT holdings
+    if (eventDateMs >= oneYearAgoMs && eventDateMs <= now.getTime()) {
+      const currentQty = currentHoldings.get(event.symbol) || 0;
+      if (currentQty > 0) {
+        const payoutLocal = currentQty * event.amount;
+        const currency = currencyMap.get(event.symbol) || baseCurrency;
+        const fxRate = fxRates[currency] || 1.0;
+        const payoutBase = payoutLocal * fxRate;
+
+        annualIncome += payoutBase;
+        annualPerSymbol.set(event.symbol, (annualPerSymbol.get(event.symbol) || 0) + payoutBase);
+
+        const eventDate = new Date(eventDateMs);
         const monthIndex = eventDate.getMonth();
         monthlyData[monthIndex].amount += payoutBase;
-      }
-
-      // 3. Check if in the last 12 months to estimate annual income
-      // The event date should be > (now - 1 year)
-      const oneYearAgoMs = now.getTime() - 365 * 24 * 60 * 60 * 1000;
-      if (eventDateMs >= oneYearAgoMs && eventDateMs <= now.getTime()) {
-        annualIncome += payoutBase;
       }
     }
   }
 
   const portfolioYield = portfolioValue > 0 ? (annualIncome / portfolioValue) * 100 : 0;
   const yieldOnCost = totalCost > 0 ? (annualIncome / totalCost) * 100 : 0;
+
+  const allSymbols = new Set([...payoutsPerSymbol.keys(), ...annualPerSymbol.keys()]);
+  const topPayers: TopPayer[] = Array.from(allSymbols)
+    .map(symbol => {
+      const totalAmount = payoutsPerSymbol.get(symbol) || 0;
+      const annualAmount = annualPerSymbol.get(symbol) || 0;
+
+      const quote = quotes.find(q => q.symbol === symbol);
+      const holding = holdings.find(h => h.symbol === symbol);
+
+      const name = quote?.name || symbol;
+
+      let symYield = 0;
+      let symYoc = 0;
+
+      if (holding && quote && quote.price > 0 && holding.quantity > 0) {
+        const fxRateQuote = fxRates[quote.currency] || 1;
+        const currentValueBase = holding.quantity * quote.price * fxRateQuote;
+        if (currentValueBase > 0) {
+          symYield = (annualAmount / currentValueBase) * 100;
+        }
+
+        const fxRateHolding = fxRates[holding.currency] || 1;
+        const totalCostBase = holding.totalCost * fxRateHolding;
+        if (totalCostBase > 0) {
+          symYoc = (annualAmount / totalCostBase) * 100;
+        }
+      }
+
+      return {
+        symbol,
+        name,
+        totalAmount,
+        yield: symYield,
+        yieldOnCost: symYoc,
+      };
+    })
+    .sort((a, b) => b.totalAmount - a.totalAmount)
+    .slice(0, 5);
 
   return {
     monthlyData,
@@ -116,5 +167,6 @@ export function calculateDividends(
       yieldOnCost,
     },
     totalAllTime,
+    topPayers,
   };
 }
