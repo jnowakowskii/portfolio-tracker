@@ -8,6 +8,7 @@ export interface MarketQuote {
   change_percent: number;
   currency: string;
   name?: string;
+  dividend_rate?: number;
 }
 
 export interface SymbolSearchResult {

@@ -61,6 +61,10 @@ struct YahooQuote {
     currency: Option<String>,
     #[serde(rename = "shortName", default)]
     short_name: Option<String>,
+    #[serde(rename = "dividendRate", default)]
+    dividend_rate: Option<f64>,
+    #[serde(rename = "trailingAnnualDividendRate", default)]
+    trailing_annual_dividend_rate: Option<f64>,
 }
 
 // ── Public return types ────────────────────────────────────────────────
@@ -79,6 +83,7 @@ pub struct MarketQuote {
     pub change_percent: f64,
     pub currency: String,
     pub name: Option<String>,
+    pub dividend_rate: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -304,6 +309,7 @@ async fn fetch_quotes(
             change_percent: q.regular_market_change_percent.unwrap_or(0.0),
             currency: q.currency.unwrap_or_else(|| "USD".to_string()),
             name: q.short_name,
+            dividend_rate: q.dividend_rate.or(q.trailing_annual_dividend_rate).or(Some(0.0)),
         })
         .collect();
 

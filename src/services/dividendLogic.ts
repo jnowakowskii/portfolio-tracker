@@ -45,140 +45,106 @@ const MONTH_NAMES = [
 export function calculateDividends(
   transactions: Transaction[],
   dividendEvents: DividendEvent[],
-  fxRates: FxRates,
+  fxRates: Record<string, number> | any,
   baseCurrency: string,
   portfolioValue: number,
   totalCost: number,
   holdings: PortfolioHolding[],
-  quotes: MarketQuote[]
+  quotes: Record<string, MarketQuote> | any
 ): DividendCalculationResult {
   let totalAllTime = 0;
-  let annualIncome = 0; 
+  let annualIncome = 0;
 
-  const now = new Date();
-  
-  const monthlyData: MonthlyDividend[] = MONTH_NAMES.map(month => ({
-    month,
-    amount: 0,
-  }));
-
-  // store current currency and holdings per symbol
+  const monthlyData: MonthlyDividend[] = MONTH_NAMES.map(month => ({ month, amount: 0 }));
   const currencyMap = new Map<string, string>();
-  const currentHoldings = new Map<string, number>();
+  const currentHoldingsMap = new Map<string, number>();
 
   for (const tx of transactions) {
-    if (!currencyMap.has(tx.symbol)) {
-      currencyMap.set(tx.symbol, tx.currency);
-    }
+    if (!currencyMap.has(tx.symbol)) currencyMap.set(tx.symbol, tx.currency);
     const qty = tx.side === "BUY" ? tx.quantity : -tx.quantity;
-    currentHoldings.set(tx.symbol, (currentHoldings.get(tx.symbol) || 0) + qty);
+    currentHoldingsMap.set(tx.symbol, (currentHoldingsMap.get(tx.symbol) || 0) + qty);
   }
 
-  const payoutsPerSymbol = new Map<string, number>();
-  const annualPerSymbol = new Map<string, number>();
-  const annualPerSymbolNative = new Map<string, number>();
-  const oneYearAgoMs = now.getTime() - 365 * 24 * 60 * 60 * 1000;
+  const nowMs = new Date().getTime();
+  const oneYearAgoMs = nowMs - 365 * 24 * 60 * 60 * 1000;
 
+  // 1. CHRONOLOGICAL HISTORY: All-Time Earned & Monthly Chart
   for (const event of dividendEvents) {
     const eventDateMs = event.date * 1000;
-    
-    // total earned all time
+    const currency = currencyMap.get(event.symbol) || baseCurrency;
+    const fxRate = fxRates[currency] || 1.0;
+
+    // Calculate All-Time Earned based on exact holdings at Ex-Date
     let quantityAtExDate = 0;
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
       const txDateMs = new Date(tx.date).getTime();
       if (txDateMs <= eventDateMs) {
-        if (tx.side === "BUY") quantityAtExDate += tx.quantity;
-        else if (tx.side === "SELL") quantityAtExDate -= tx.quantity;
+        quantityAtExDate += tx.side === "BUY" ? tx.quantity : -tx.quantity;
       }
     }
-
     if (quantityAtExDate > 0) {
-      const payoutLocal = quantityAtExDate * event.amount;
-      const currency = currencyMap.get(event.symbol) || baseCurrency;
-      const fxRate = fxRates[currency] || 1.0;
-      const payoutBase = payoutLocal * fxRate;
-
-      totalAllTime += payoutBase;
-      payoutsPerSymbol.set(event.symbol, (payoutsPerSymbol.get(event.symbol) || 0) + payoutBase);
+      totalAllTime += (quantityAtExDate * event.amount) * fxRate;
     }
 
-    // forward projection
-    // project the upcoming months based on events and holdings
-    if (eventDateMs >= oneYearAgoMs && eventDateMs <= now.getTime()) {
-      const currentQty = currentHoldings.get(event.symbol) || 0;
-      if (currentQty > 0) {
-        const payoutLocal = currentQty * event.amount;
-        const currency = currencyMap.get(event.symbol) || baseCurrency;
-        const fxRate = fxRates[currency] || 1.0;
-        const payoutBase = payoutLocal * fxRate;
+    // Populate Monthly Chart (last 12 months)
+    const currentQty = currentHoldingsMap.get(event.symbol) || 0;
+    if (currentQty > 0 && eventDateMs >= oneYearAgoMs && eventDateMs <= nowMs) {
+      const payoutBase = (event.amount * currentQty) * fxRate;
+      const monthIndex = new Date(eventDateMs).getMonth();
+      monthlyData[monthIndex].amount += payoutBase;
+    }
+  }
 
-        annualIncome += payoutBase;
-        annualPerSymbol.set(event.symbol, (annualPerSymbol.get(event.symbol) || 0) + payoutBase);
-        annualPerSymbolNative.set(event.symbol, (annualPerSymbolNative.get(event.symbol) || 0) + payoutLocal);
+  // 2. FORWARD PROJECTION: Annual Income & Top Payers
+  const topPayers: TopPayer[] = [];
 
-        const eventDate = new Date(eventDateMs);
-        const monthIndex = eventDate.getMonth();
-        monthlyData[monthIndex].amount += payoutBase;
-      }
+  for (const [symbol, currentQty] of currentHoldingsMap.entries()) {
+    if (currentQty <= 0) continue;
+
+    const quote = quotes[symbol];
+    const holding = holdings.find(h => h.symbol === symbol);
+    const currency = currencyMap.get(symbol) || baseCurrency;
+    const fxRate = fxRates[currency] || 1.0;
+
+    // Grab official Yahoo projected annual dividend rate per share
+    const annualPerShareNative = quote?.dividend_rate || 0;
+
+    if (annualPerShareNative > 0) {
+      const forwardNative = annualPerShareNative * currentQty;
+      const forwardBase = forwardNative * fxRate;
+      annualIncome += forwardBase;
+
+      const currentValueBase = holding && quote ? (holding.quantity * quote.price) / (fxRates[quote.currency] || 1) : 0;
+      const totalCostBase = holding ? holding.totalCost / (fxRates[holding.currency] || 1) : 0;
+
+      const symYield = currentValueBase > 0 ? (forwardBase / currentValueBase) * 100 : 0;
+      const symYoc = totalCostBase > 0 ? (forwardBase / totalCostBase) * 100 : 0;
+
+      topPayers.push({
+        symbol,
+        name: quote?.name || symbol,
+        totalAmount: 0, // Unused in UI, kept for interface compliance
+        annualAmount: forwardBase,
+        annualAmountNative: forwardNative,
+        currency,
+        yield: symYield,
+        yieldOnCost: symYoc,
+        quantity: currentQty,
+        dividendPerShare: annualPerShareNative
+      });
     }
   }
 
   const portfolioYield = portfolioValue > 0 ? (annualIncome / portfolioValue) * 100 : 0;
   const yieldOnCost = totalCost > 0 ? (annualIncome / totalCost) * 100 : 0;
 
-  const allSymbols = new Set([...payoutsPerSymbol.keys(), ...annualPerSymbol.keys()]);
-  const topPayers: TopPayer[] = Array.from(allSymbols)
-    .map(symbol => {
-      const totalAmount = payoutsPerSymbol.get(symbol) || 0;
-      const annualAmount = annualPerSymbol.get(symbol) || 0;
-
-      const quote = quotes.find(q => q.symbol === symbol);
-      const holding = holdings.find(h => h.symbol === symbol);
-
-      const name = quote?.name || symbol;
-
-      let symYield = 0;
-      let symYoc = 0;
-
-      if (holding && quote && quote.price > 0 && holding.quantity > 0) {
-        const fxRateQuote = fxRates[quote.currency] || 1;
-        const currentValueBase = holding.quantity * quote.price * fxRateQuote;
-        if (currentValueBase > 0) {
-          symYield = (annualAmount / currentValueBase) * 100;
-        }
-
-        const fxRateHolding = fxRates[holding.currency] || 1;
-        const totalCostBase = holding.totalCost * fxRateHolding;
-        if (totalCostBase > 0) {
-          symYoc = (annualAmount / totalCostBase) * 100;
-        }
-      }
-
-      return {
-        symbol,
-        name,
-        totalAmount,
-        annualAmount,
-        annualAmountNative: annualPerSymbolNative.get(symbol) || 0,
-        currency: quote?.currency || currencyMap.get(symbol) || baseCurrency,
-        yield: symYield,
-        yieldOnCost: symYoc,
-        quantity: holding?.quantity || 0,
-        dividendPerShare: (holding?.quantity || 0) > 0 ? (annualPerSymbolNative.get(symbol) || 0) / holding!.quantity : 0,
-      };
-    })
-    .sort((a, b) => b.annualAmount - a.annualAmount)
-    .slice(0, 5);
+  topPayers.sort((a, b) => b.annualAmount - a.annualAmount);
 
   return {
     monthlyData,
-    stats: {
-      annualIncome,
-      yield: portfolioYield,
-      yieldOnCost,
-    },
+    stats: { annualIncome, yield: portfolioYield, yieldOnCost },
     totalAllTime,
-    topPayers,
+    topPayers: topPayers.slice(0, 5),
   };
 }
