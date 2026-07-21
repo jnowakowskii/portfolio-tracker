@@ -1,4 +1,4 @@
-import { Transaction, FxRates, PortfolioHolding, MarketQuote } from "./marketData";
+import { Transaction, PortfolioHolding, MarketQuote } from "./marketData";
 
 export interface DividendEvent {
   symbol: string;
