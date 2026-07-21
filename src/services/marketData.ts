@@ -8,6 +8,7 @@ export interface MarketQuote {
   change_percent: number;
   currency: string;
   name?: string;
+  dividendRate?: number;
   dividend_rate?: number;
 }
 

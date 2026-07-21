@@ -4,14 +4,14 @@ use std::sync::Mutex;
 use tauri::State;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-// ── Yahoo Finance auth state ───────────────────────────────────────────
+// ── yahoo finance auth state ───────────────────────────────────────────
 
 struct YahooAuth {
     crumb: Mutex<Option<String>>,
     cookie: Mutex<Option<String>>,
 }
 
-// ── Yahoo Finance response types ───────────────────────────────────────
+// ── yahoo finance response types ───────────────────────────────────────
 
 #[derive(Debug, Deserialize)]
 struct YahooChartResponse {
@@ -67,7 +67,7 @@ struct YahooQuote {
     trailing_annual_dividend_rate: Option<f64>,
 }
 
-// ── Public return types ────────────────────────────────────────────────
+// ── public return types ────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Clone)]
 pub struct DividendEvent {
@@ -100,15 +100,15 @@ struct YahooSearchResponse {
     quotes: Vec<SymbolSearchResult>,
 }
 
-/// Combined response for a single-batch boot/refresh call.
-/// Contains market quotes for user tickers and FX rates in one Yahoo request.
+/// combined response for a single-batch boot/refresh call.
+/// contains market quotes for user tickers and fx rates in one yahoo request.
 #[derive(Debug, Serialize, Clone)]
 pub struct CombinedData {
     pub market_quotes: Vec<MarketQuote>,
     pub fx_rates: HashMap<String, f64>,
 }
 
-// ── Cookie + Crumb helpers ─────────────────────────────────────────────
+// ── cookie + crumb helpers ─────────────────────────────────────────────
 
 async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
     let client = reqwest::Client::builder()
@@ -117,14 +117,14 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    // Step 1: Hit the consent/finance page to get cookies
+    // step 1: hit the consent/finance page to get cookies
     let resp = client
         .get("https://fc.yahoo.com/")
         .send()
         .await
         .map_err(|e| format!("Cookie request failed: {}", e))?;
 
-    // Collect Set-Cookie headers
+    // collect set-cookie headers
     let cookies: Vec<String> = resp
         .headers()
         .get_all("set-cookie")
@@ -136,7 +136,7 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
 
     let cookie_header = cookies.join("; ");
 
-    // Step 2: Fetch the crumb using the cookies
+    // step 2: fetch the crumb using the cookies
     let crumb_resp = client
         .get("https://query2.finance.yahoo.com/v1/test/getcrumb")
         .header("cookie", &cookie_header)
@@ -163,7 +163,7 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
     Ok((crumb, cookie_header))
 }
 
-/// Shared helper to ensure we have valid auth, refreshing if needed
+/// shared helper to ensure we have valid auth, refreshing if needed
 async fn ensure_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), String> {
     let cached_crumb = auth.crumb.lock().unwrap().clone();
     let cached_cookie = auth.cookie.lock().unwrap().clone();
@@ -187,7 +187,7 @@ async fn refresh_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), S
     Ok((new_crumb, new_cookie))
 }
 
-// ── Tauri commands ─────────────────────────────────────────────────────
+// ── tauri commands ─────────────────────────────────────────────────────
 
 #[tauri::command]
 async fn get_market_data(
@@ -226,7 +226,7 @@ async fn get_combined_data(
         }
     }
 
-    // Build the full batch: user tickers + FX pairs (deduped)
+    // build the full batch: user tickers + fx pairs (deduped)
     let mut all_symbols: Vec<String> = symbols.clone();
     for fx in &fx_symbols {
         let s = fx.to_string();
@@ -246,7 +246,7 @@ async fn get_combined_data(
         }
     };
 
-    // Split into market quotes vs FX quotes
+    // split into market quotes vs fx quotes
     let mut market_quotes: Vec<MarketQuote> = Vec::new();
     let mut fx_quotes: Vec<MarketQuote> = Vec::new();
     let suffix = format!("{}={}", base_currency, "X");

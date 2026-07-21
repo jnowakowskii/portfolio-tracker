@@ -68,13 +68,13 @@ export function calculateDividends(
   const nowMs = new Date().getTime();
   const oneYearAgoMs = nowMs - 365 * 24 * 60 * 60 * 1000;
 
-  // 1. CHRONOLOGICAL HISTORY: All-Time Earned & Monthly Chart
+  // 1. chronological history: all-time earned & monthly chart
   for (const event of dividendEvents) {
     const eventDateMs = event.date * 1000;
     const currency = currencyMap.get(event.symbol) || baseCurrency;
     const fxRate = fxRates[currency] || 1.0;
 
-    // Calculate All-Time Earned based on exact holdings at Ex-Date
+    // calculate all-time earned based on exact holdings at ex-date
     let quantityAtExDate = 0;
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
@@ -87,7 +87,7 @@ export function calculateDividends(
       totalAllTime += (quantityAtExDate * event.amount) * fxRate;
     }
 
-    // Populate Monthly Chart (last 12 months)
+    // populate monthly chart (last 12 months)
     const currentQty = currentHoldingsMap.get(event.symbol) || 0;
     if (currentQty > 0 && eventDateMs >= oneYearAgoMs && eventDateMs <= nowMs) {
       const payoutBase = (event.amount * currentQty) * fxRate;
@@ -96,19 +96,23 @@ export function calculateDividends(
     }
   }
 
-  // 2. FORWARD PROJECTION: Annual Income & Top Payers
+  // 2. forward projection: annual income & top payers
   const topPayers: TopPayer[] = [];
 
   for (const [symbol, currentQty] of currentHoldingsMap.entries()) {
     if (currentQty <= 0) continue;
 
-    const quote = quotes[symbol];
+    // bulletproof lookup in case `quotes` is an array or a record
+    const quote = Array.isArray(quotes)
+      ? quotes.find((q: any) => q.symbol === symbol)
+      : quotes[symbol] || Object.values(quotes).find((q: any) => q.symbol === symbol);
+
     const holding = holdings.find(h => h.symbol === symbol);
     const currency = currencyMap.get(symbol) || baseCurrency;
     const fxRate = fxRates[currency] || 1.0;
 
-    // Grab official Yahoo projected annual dividend rate per share
-    const annualPerShareNative = quote?.dividend_rate || 0;
+    // handle both snake_case and camelcase serialization from rust
+    const annualPerShareNative = quote?.dividendRate || quote?.dividend_rate || 0;
 
     if (annualPerShareNative > 0) {
       const forwardNative = annualPerShareNative * currentQty;
@@ -124,7 +128,7 @@ export function calculateDividends(
       topPayers.push({
         symbol,
         name: quote?.name || symbol,
-        totalAmount: 0, // Unused in UI, kept for interface compliance
+        totalAmount: 0, // unused in ui, kept for interface compliance
         annualAmount: forwardBase,
         annualAmountNative: forwardNative,
         currency,
