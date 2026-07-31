@@ -133,7 +133,7 @@ export function DividendsPage() {
         {/* left placeholder */}
         <div className="lg:col-span-6 p-6 rounded-xl bg-neutral-800/50 border border-neutral-700/50 backdrop-blur-md flex items-center justify-center min-h-[200px]">
           <p className="text-neutral-400 text-sm font-medium">
-            Upcoming Dividends (Coming Soon)
+            Upcoming Dividends
           </p>
         </div>
 

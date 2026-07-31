@@ -74,7 +74,7 @@ export function DashboardPage() {
             </div>
             <div className="flex-1 flex items-center justify-center">
               <span className="text-sm" style={{ color: "#404040" }}>
-                Performance chart visualization coming soon...
+                Performance chart visualization
               </span>
             </div>
           </div>

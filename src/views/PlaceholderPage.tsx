@@ -9,7 +9,7 @@ export function PlaceholderPage({ title }: PlaceholderPageProps) {
         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>
           {title}
         </h1>
-        <p className="text-sm" style={{ color: "#525252" }}>Coming soon</p>
+        <p className="text-sm" style={{ color: "#525252" }}>Placeholder</p>
       </div>
     </div>
   );
