@@ -175,7 +175,7 @@ export function AllocationPage() {
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
-                <Legend content={renderLegend} verticalAlign="bottom" />
+                <Legend content={renderLegend} />
               </PieChart>
             </ResponsiveContainer>
           </div>

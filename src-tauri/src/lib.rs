@@ -464,7 +464,7 @@ async fn fetch_historical_prices(
     cookie: &str,
 ) -> Result<Vec<HistoricalPrice>, String> {
     let url = format!(
-        "https://query2.finance.yahoo.com/v8/finance/chart/{}?interval=1d&range=1y&crumb={}",
+        "https://query2.finance.yahoo.com/v8/finance/chart/{}?interval=1d&range=5y&crumb={}",
         symbol, crumb
     );
 

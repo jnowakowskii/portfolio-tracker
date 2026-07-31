@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Wallet, PieChart, Activity } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { SummaryCard } from "../components/ui/SummaryCard";
@@ -10,6 +11,14 @@ function formatCurrency(value: number, symbol: string): string {
   return `${value < 0 ? "-" : ""}${formatted} ${symbol}`;
 }
 
+const yAxisFormatter = (value: number, symbol: string) => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M ${symbol}`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k ${symbol}`;
+  return `${value} ${symbol}`;
+};
+
+const CHART_COLOR = "#10b981";
+
 export function DashboardPage() {
   const {
     transactions,
@@ -21,6 +30,24 @@ export function DashboardPage() {
     totalCost,
     portfolioHistory,
   } = usePortfolioStore();
+
+  const [timeRange, setTimeRange] = useState<'3M' | '6M' | 'YTD' | '1Y' | '5Y'>('3M');
+
+  const filteredHistory = useMemo(() => {
+    if (!portfolioHistory) return [];
+    const now = Date.now();
+    let cutoff = 0;
+    switch (timeRange) {
+      case '3M': cutoff = now - 90 * 24 * 60 * 60 * 1000; break;
+      case '6M': cutoff = now - 180 * 24 * 60 * 60 * 1000; break;
+      case '1Y': cutoff = now - 365 * 24 * 60 * 60 * 1000; break;
+      case '5Y': cutoff = now - 5 * 365 * 24 * 60 * 60 * 1000; break;
+      case 'YTD':
+        cutoff = new Date(new Date().getFullYear(), 0, 1).getTime();
+        break;
+    }
+    return portfolioHistory.filter(d => d.timestamp >= cutoff);
+  }, [portfolioHistory, timeRange]);
 
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
   const baseRate = fxRates[baseCurrency] ?? 1.0;
@@ -67,45 +94,64 @@ export function DashboardPage() {
             style={{ background: "#171717", border: "1px solid #262626" }}
           >
             <div
-              className="px-6 py-4 shrink-0"
+              className="flex items-center justify-between px-6 py-4 shrink-0"
               style={{ borderBottom: "1px solid #262626" }}
             >
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
                 Portfolio Performance
               </span>
+              <div className="flex bg-[#262626] rounded-lg p-1">
+                {(['3M', '6M', 'YTD', '1Y', '5Y'] as const).map(range => (
+                  <button
+                    key={range}
+                    onClick={() => setTimeRange(range)}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${timeRange === range
+                      ? 'bg-[#404040] text-white shadow'
+                      : 'text-[#a3a3a3] hover:text-white hover:bg-[#333333]'
+                      }`}
+                  >
+                    {range}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex-1 w-full h-full p-4 pt-6">
-              {portfolioHistory && portfolioHistory.length > 0 ? (
+              {filteredHistory && filteredHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={portfolioHistory}>
+                  <AreaChart data={filteredHistory} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        <stop offset="5%" stopColor={CHART_COLOR} stopOpacity={0.4} />
+                        <stop offset="95%" stopColor={CHART_COLOR} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <XAxis
                       dataKey="date"
                       stroke="#737373"
-                      tick={{ fill: '#737373', fontSize: 12 }}
+                      tick={{ fill: '#737373', fontSize: 13 }}
                       tickLine={false}
                       axisLine={false}
                       minTickGap={30}
                     />
                     <YAxis
-                      hide
                       domain={['auto', 'auto']}
+                      tickFormatter={(value) => yAxisFormatter(value, baseSymbol)}
+                      stroke="#737373"
+                      tick={{ fill: '#737373', fontSize: 13 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={85}
                     />
                     <Tooltip
                       contentStyle={{ backgroundColor: '#171717', borderColor: '#262626', color: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
-                      itemStyle={{ color: '#10b981', fontWeight: 600 }}
+                      itemStyle={{ color: CHART_COLOR, fontWeight: 600 }}
                       labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
                       formatter={(value: any) => [`${formatCurrency(Number(value), baseSymbol)}`, 'Value']}
                     />
                     <Area
                       type="monotone"
                       dataKey="value"
-                      stroke="#10b981"
+                      stroke={CHART_COLOR}
                       strokeWidth={2}
                       fillOpacity={1}
                       fill="url(#colorValue)"

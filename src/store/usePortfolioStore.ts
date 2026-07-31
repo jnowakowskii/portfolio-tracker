@@ -222,7 +222,7 @@ export const usePortfolioStore = create<PortfolioState>()(
           let historicalPrices: Record<string, HistoricalPrice[]> = {};
           try {
              historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
-             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 90);
+             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
              set({ portfolioHistory: history });
           } catch (error) {
              console.error("Failed to fetch historical prices:", error);
