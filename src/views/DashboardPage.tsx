@@ -1,4 +1,5 @@
 import { Wallet, PieChart, Activity } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { SummaryCard } from "../components/ui/SummaryCard";
 import { CURRENCY_SYMBOLS } from "../services/marketData";
 import { usePortfolioStore } from "../store/usePortfolioStore";
@@ -18,6 +19,7 @@ export function DashboardPage() {
     baseCurrency,
     portfolioValue,
     totalCost,
+    portfolioHistory,
   } = usePortfolioStore();
 
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
@@ -72,10 +74,51 @@ export function DashboardPage() {
                 Portfolio Performance
               </span>
             </div>
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-sm" style={{ color: "#404040" }}>
-                Performance chart visualization
-              </span>
+            <div className="flex-1 w-full h-full p-4 pt-6">
+              {portfolioHistory && portfolioHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={portfolioHistory}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="date"
+                      stroke="#737373"
+                      tick={{ fill: '#737373', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      minTickGap={30}
+                    />
+                    <YAxis
+                      hide
+                      domain={['auto', 'auto']}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#171717', borderColor: '#262626', color: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
+                      itemStyle={{ color: '#10b981', fontWeight: 600 }}
+                      labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
+                      formatter={(value: any) => [`${formatCurrency(Number(value), baseSymbol)}`, 'Value']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorValue)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-sm" style={{ color: "#404040" }}>
+                    No historical data available
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,11 @@ import {
   type TopPayer,
 } from "../services/dividendLogic";
 import { type ApiStat, initialApiStats } from "../types/apiStats";
+import {
+  generatePortfolioHistory,
+  type ChartDataPoint,
+  type HistoricalPrice,
+} from "../services/chartLogic";
 
 function applyCallResult(
   prev: ApiStat,
@@ -57,6 +62,7 @@ interface PortfolioState {
   // calculated state
   portfolioValue: number;
   totalCost: number;
+  portfolioHistory: ChartDataPoint[];
   
   // dividend state
   dividendEvents: DividendEvent[];
@@ -88,6 +94,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       // initial calculated state
       portfolioValue: 0,
       totalCost: 0,
+      portfolioHistory: [],
       
       // initial dividend state
       dividendEvents: [],
@@ -175,6 +182,7 @@ export const usePortfolioStore = create<PortfolioState>()(
               quotes: [],
               portfolioValue: 0,
               totalCost: 0,
+              portfolioHistory: [],
               isLoadingMarket: false
             });
             return;
@@ -208,6 +216,16 @@ export const usePortfolioStore = create<PortfolioState>()(
              set({ dividendEvents: events });
           } catch (error) {
              console.error("Failed to fetch dividend history:", error);
+          }
+
+          // fetch historical prices
+          let historicalPrices: Record<string, HistoricalPrice[]> = {};
+          try {
+             historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
+             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 90);
+             set({ portfolioHistory: history });
+          } catch (error) {
+             console.error("Failed to fetch historical prices:", error);
           }
 
           // run calculations
@@ -249,6 +267,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         baseCurrency: state.baseCurrency,
         portfolioValue: state.portfolioValue,
         totalCost: state.totalCost,
+        portfolioHistory: state.portfolioHistory,
         dividendEvents: state.dividendEvents,
         monthlyDividends: state.monthlyDividends,
         dividendStats: state.dividendStats,

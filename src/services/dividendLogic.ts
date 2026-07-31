@@ -119,8 +119,8 @@ export function calculateDividends(
       const forwardBase = forwardNative * fxRate;
       annualIncome += forwardBase;
 
-      const currentValueBase = holding && quote ? (holding.quantity * quote.price) / (fxRates[quote.currency] || 1) : 0;
-      const totalCostBase = holding ? holding.totalCost / (fxRates[holding.currency] || 1) : 0;
+      const currentValueBase = holding && quote ? (holding.quantity * quote.price) * (fxRates[quote.currency] || 1) : 0;
+      const totalCostBase = holding ? holding.totalCost * (fxRates[holding.currency] || 1) : 0;
 
       const symYield = currentValueBase > 0 ? (forwardBase / currentValueBase) * 100 : 0;
       const symYoc = totalCostBase > 0 ? (forwardBase / totalCostBase) * 100 : 0;
