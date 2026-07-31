@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity } from "lucide-react";
+import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity, Download, Upload } from "lucide-react";
+import { save, open } from '@tauri-apps/plugin-dialog';
+import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
 import Database from "@tauri-apps/plugin-sql";
 import { SUPPORTED_CURRENCIES, CURRENCY_SYMBOLS, type SupportedCurrency } from "../services/marketData";
 import { usePortfolioStore } from "../store/usePortfolioStore";
@@ -31,9 +33,11 @@ function StatRow({ label, value, mono = true }: { label: string; value: React.Re
   );
 }
 
-function formatTime(date: Date | null): string {
+function formatTime(date: Date | string | null): string {
   if (!date) return "—";
-  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 // component
@@ -52,6 +56,9 @@ export function SettingsPage() {
   const [isResetting, setIsResetting] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [importStep, setImportStep] = useState<"idle" | "confirm">("idle");
+  const [importedTxs, setImportedTxs] = useState<any[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -90,6 +97,61 @@ export function SettingsPage() {
     } finally {
       setIsRefreshing(false);
     }
+  };
+
+  const handleExport = async () => {
+    try {
+      const filePath = await save({
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        defaultPath: 'portfolio-backup.json'
+      });
+      if (filePath) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const exportData = usePortfolioStore.getState().transactions.map(({ id, ...rest }) => rest);
+        await writeTextFile(filePath, JSON.stringify(exportData, null, 2));
+      }
+    } catch (e) {
+      alert("Export failed: " + e);
+    }
+  };
+
+  const handleImportClick = async () => {
+    try {
+      const selected = await open({
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        multiple: false
+      });
+      if (selected && typeof selected === 'string') {
+        const contents = await readTextFile(selected);
+        const parsed = JSON.parse(contents);
+        if (Array.isArray(parsed)) {
+          setImportedTxs(parsed);
+          setImportStep("confirm");
+        } else {
+          alert("Invalid backup file format.");
+        }
+      }
+    } catch (e) {
+      alert("Import failed: " + e);
+    }
+  };
+
+  const confirmImport = async () => {
+    setIsImporting(true);
+    try {
+      await usePortfolioStore.getState().importTransactions(importedTxs);
+      setImportStep("idle");
+      setImportedTxs([]);
+    } catch (e) {
+      alert("Failed to import data: " + e);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const cancelImport = () => {
+    setImportStep("idle");
+    setImportedTxs([]);
   };
 
   const statusColor = apiStats.yahooStatus === "online"
@@ -200,7 +262,7 @@ export function SettingsPage() {
                   className="rounded-lg p-3 space-y-1.5 overflow-y-auto"
                   style={{ background: "#0a0a0a", border: "1px solid #262626", maxHeight: "100px", minHeight: "52px" }}
                 >
-                  {apiStats.errors.length === 0 ? (
+                  {!apiStats?.errors || apiStats.errors.length === 0 ? (
                     <p className="text-xs font-mono" style={{ color: "#404040" }}>No errors recorded.</p>
                   ) : (
                     apiStats.errors.map((e, i) => (
@@ -238,6 +300,73 @@ export function SettingsPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* data backup and restore */}
+        <div style={panel}>
+          <div style={panelHeader}>
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>Data Backup & Restore</span>
+          </div>
+          <div className="px-6 py-5 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Export / Import Portfolio</p>
+                <p className="text-xs mt-1" style={{ color: "#737373" }}>Save your data to a file or restore from a backup.</p>
+              </div>
+              {importStep === "idle" && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                    style={{ background: "#262626", color: "#e5e5e5", border: "1px solid #404040" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#333333"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#262626"; }}
+                  >
+                    <Download size={14} /> Export
+                  </button>
+                  <button
+                    onClick={handleImportClick}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                    style={{ background: "#0a0a0a", color: "#a3a3a3", border: "1px solid #262626" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; }}
+                  >
+                    <Upload size={14} /> Import
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {importStep === "confirm" && (
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <p className="text-xs font-semibold" style={{ color: "#eab308" }}>Confirm Import</p>
+                <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                  This will completely overwrite your current portfolio with <span style={{ color: "#e5e5e5", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={confirmImport}
+                    disabled={isImporting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 active:scale-95"
+                    style={{ background: "#eab308", color: "#0a0a0a" }}
+                  >
+                    <Upload size={14} />
+                    {isImporting ? "Importing…" : "Yes, overwrite data"}
+                  </button>
+                  <button
+                    onClick={cancelImport}
+                    disabled={isImporting}
+                    className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
+                    style={{ color: "#737373" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

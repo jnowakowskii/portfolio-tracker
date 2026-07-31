@@ -77,6 +77,7 @@ interface PortfolioState {
   // actions
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
   loadTransactions: () => Promise<Transaction[]>;
+  importTransactions: (txs: Omit<Transaction, "id">[]) => Promise<void>;
   fetchMarketData: (txs?: Transaction[]) => Promise<void>;
   resetApiStats: () => void;
 }
@@ -118,6 +119,24 @@ export const usePortfolioStore = create<PortfolioState>()(
         await get().fetchMarketData();
       },
 
+      importTransactions: async (txs) => {
+        try {
+          const db = await Database.load("sqlite:portfolio.db");
+          await db.execute("DELETE FROM transactions");
+          for (const tx of txs) {
+            await db.execute(
+              "INSERT INTO transactions (symbol, side, quantity, price, commission, date, currency) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+              [tx.symbol, tx.side, tx.quantity, tx.price, tx.commission, tx.date, tx.currency]
+            );
+          }
+          await get().loadTransactions();
+          await get().fetchMarketData();
+        } catch (error) {
+          console.error("Failed to import transactions:", error);
+          throw error;
+        }
+      },
+
       loadTransactions: async () => {
         try {
           const db = await Database.load("sqlite:portfolio.db");
@@ -134,6 +153,10 @@ export const usePortfolioStore = create<PortfolioState>()(
             set({
               portfolioValue: 0,
               totalCost: 0,
+              monthlyDividends: [],
+              dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
+              topPayers: [],
+              dividendEvents: [],
             });
             return result;
           }
@@ -183,6 +206,10 @@ export const usePortfolioStore = create<PortfolioState>()(
               portfolioValue: 0,
               totalCost: 0,
               portfolioHistory: [],
+              monthlyDividends: [],
+              dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
+              topPayers: [],
+              dividendEvents: [],
               isLoadingMarket: false
             });
             return;
