@@ -88,9 +88,8 @@ export function calculateDividends(
     }
 
     // populate monthly chart (last 12 months)
-    const currentQty = currentHoldingsMap.get(event.symbol) || 0;
-    if (currentQty > 0 && eventDateMs >= oneYearAgoMs && eventDateMs <= nowMs) {
-      const payoutBase = (event.amount * currentQty) * fxRate;
+    if (quantityAtExDate > 0 && eventDateMs >= oneYearAgoMs && eventDateMs <= nowMs) {
+      const payoutBase = (event.amount * quantityAtExDate) * fxRate;
       const monthIndex = new Date(eventDateMs).getMonth();
       monthlyData[monthIndex].amount += payoutBase;
     }
