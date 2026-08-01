@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity, Download, Upload } from "lucide-react";
+import { Trash2, ChevronDown, RefreshCw, RotateCcw, Activity, Download, Upload, SlidersHorizontal, DatabaseZap, TriangleAlert } from "lucide-react";
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
 import Database from "@tauri-apps/plugin-sql";
@@ -175,7 +175,12 @@ export function SettingsPage() {
         {/* general section */}
         <div style={panel}>
           <div style={panelHeader}>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>General</span>
+            <div className="flex items-center gap-2.5">
+              <SlidersHorizontal size={15} style={{ color: "#737373" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+                General
+              </span>
+            </div>
           </div>
           <div className="flex items-center justify-between px-6 py-5">
             <div>
@@ -197,6 +202,76 @@ export function SettingsPage() {
                 ))}
               </select>
             </div>
+          </div>
+        </div>
+
+        {/* data backup and restore */}
+        <div style={panel}>
+          <div style={panelHeader}>
+            <div className="flex items-center gap-2.5">
+              <DatabaseZap size={15} style={{ color: "#737373" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>Data Backup & Restore</span>
+            </div>
+          </div>
+          <div className="px-6 py-5 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Export / Import Portfolio</p>
+                <p className="text-xs mt-1" style={{ color: "#737373" }}>Save your data to a file or restore from a backup.</p>
+              </div>
+              {importStep === "idle" && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExport}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                    style={{ background: "#262626", color: "#e5e5e5", border: "1px solid #404040" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#333333"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#262626"; }}
+                  >
+                    <Download size={14} /> Export
+                  </button>
+                  <button
+                    onClick={handleImportClick}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
+                    style={{ background: "#0a0a0a", color: "#a3a3a3", border: "1px solid #262626" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; }}
+                  >
+                    <Upload size={14} /> Import
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {importStep === "confirm" && (
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <p className="text-xs font-semibold" style={{ color: "#eab308" }}>Confirm Import</p>
+                <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                  This will completely overwrite your current portfolio with <span style={{ color: "#e5e5e5", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={confirmImport}
+                    disabled={isImporting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 active:scale-95"
+                    style={{ background: "#eab308", color: "#0a0a0a" }}
+                  >
+                    <Upload size={14} />
+                    {isImporting ? "Importing…" : "Yes, overwrite data"}
+                  </button>
+                  <button
+                    onClick={cancelImport}
+                    disabled={isImporting}
+                    className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
+                    style={{ color: "#737373" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -303,77 +378,15 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* data backup and restore */}
-        <div style={panel}>
-          <div style={panelHeader}>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>Data Backup & Restore</span>
-          </div>
-          <div className="px-6 py-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Export / Import Portfolio</p>
-                <p className="text-xs mt-1" style={{ color: "#737373" }}>Save your data to a file or restore from a backup.</p>
-              </div>
-              {importStep === "idle" && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleExport}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "#262626", color: "#e5e5e5", border: "1px solid #404040" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#333333"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#262626"; }}
-                  >
-                    <Download size={14} /> Export
-                  </button>
-                  <button
-                    onClick={handleImportClick}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "#0a0a0a", color: "#a3a3a3", border: "1px solid #262626" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; }}
-                  >
-                    <Upload size={14} /> Import
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {importStep === "confirm" && (
-              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)" }}>
-                <p className="text-xs font-semibold" style={{ color: "#eab308" }}>Confirm Import</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                  This will completely overwrite your current portfolio with <span style={{ color: "#e5e5e5", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={confirmImport}
-                    disabled={isImporting}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 active:scale-95"
-                    style={{ background: "#eab308", color: "#0a0a0a" }}
-                  >
-                    <Upload size={14} />
-                    {isImporting ? "Importing…" : "Yes, overwrite data"}
-                  </button>
-                  <button
-                    onClick={cancelImport}
-                    disabled={isImporting}
-                    className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-                    style={{ color: "#737373" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+
 
         {/* danger zone */}
         <div style={{ ...panel, border: "1px solid #2d1515" }}>
           <div style={{ ...panelHeader, borderBottom: "1px solid #2d1515", background: "rgba(220,38,38,0.04)" }}>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#ef4444" }}>Danger Zone</span>
+            <div className="flex items-center gap-2.5">
+              <TriangleAlert size={15} style={{ color: "#ef4444" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#ef4444" }}>Danger Zone</span>
+            </div>
           </div>
           <div className="px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
@@ -469,7 +482,7 @@ export function SettingsPage() {
 
       <div className="w-full max-w-2xl pt-12 pb-2 text-center mt-auto">
         <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "#3f3f3fff" }}>
-          Callisto Beta v0.2.2<br /><br />
+          Callisto Beta v0.3.0<br /><br />
           © 2026 jakubnowakowski.com<br />
           Data via Yahoo Finance
         </p>
