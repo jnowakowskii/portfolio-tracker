@@ -20,12 +20,11 @@ export function generatePortfolioHistory(
 ): ChartDataPoint[] {
   const chartData: ChartDataPoint[] = [];
 
-  // Calculate today's midnight timestamp in milliseconds
+  // Use the current date to determine historical midnights, avoiding DST bugs
   const now = new Date();
-  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
   for (let i = days - 1; i >= 0; i--) {
-    const currentDayMs = todayMidnight - i * 24 * 60 * 60 * 1000;
+    const currentDayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i).getTime();
     const dateStr = new Date(currentDayMs).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
     // Filter transactions to find the exact holdings owned strictly ON OR BEFORE this specific day.
