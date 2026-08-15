@@ -10,7 +10,8 @@ import {
 import { usePortfolioStore } from "../store/usePortfolioStore";
 
 export function DividendsPage() {
-  const { monthlyDividends, dividendStats, topPayers, baseCurrency } = usePortfolioStore();
+  const { monthlyDividends, dividendStats, topPayers, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
+  const mask = "*****";
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
@@ -76,7 +77,7 @@ export function DividendsPage() {
           <div>
             <p className="text-sm font-medium text-neutral-400 mb-1">Annual Income</p>
             <p className="text-3xl font-bold text-neutral-100 tracking-tight">
-              {dividendStats.annualIncome.toLocaleString(undefined, {
+              {isPrivacyModeEnabled ? mask : dividendStats.annualIncome.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })} <span className="text-2xl text-neutral-400 font-medium">{baseCurrency}</span>
@@ -88,7 +89,7 @@ export function DividendsPage() {
             <div>
               <p className="text-xs font-medium text-neutral-400 mb-1">Monthly</p>
               <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
-                {(dividendStats.annualIncome / 12).toLocaleString(undefined, {
+                {isPrivacyModeEnabled ? mask : (dividendStats.annualIncome / 12).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })} <span className="text-sm text-neutral-500 font-medium">{baseCurrency}</span>
@@ -97,7 +98,7 @@ export function DividendsPage() {
             <div>
               <p className="text-xs font-medium text-neutral-400 mb-1">Daily</p>
               <p className="text-2xl font-semibold text-neutral-200 tracking-tight">
-                {(dividendStats.annualIncome / 365).toLocaleString(undefined, {
+                {isPrivacyModeEnabled ? mask : (dividendStats.annualIncome / 365).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })} <span className="text-sm text-neutral-500 font-medium">{baseCurrency}</span>
@@ -157,7 +158,7 @@ export function DividendsPage() {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-neutral-100 font-semibold">
-                      {payer.annualAmountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payer.currency}
+                      {isPrivacyModeEnabled ? mask : payer.annualAmountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payer.currency}
                     </span>
                     <div className="flex space-x-2 text-xs text-neutral-500">
                       <span>Yield: {payer.yield.toFixed(2)}%</span>

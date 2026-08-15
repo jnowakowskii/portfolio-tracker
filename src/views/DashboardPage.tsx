@@ -29,7 +29,9 @@ export function DashboardPage() {
     portfolioValue,
     totalCost,
     portfolioHistory,
+    isPrivacyModeEnabled,
   } = usePortfolioStore();
+  const mask = "••••••";
 
   const [timeRange, setTimeRange] = useState<'3M' | '6M' | 'YTD' | '1Y' | '5Y'>('3M');
 
@@ -240,10 +242,10 @@ export function DashboardPage() {
                         {/* transaction right side */}
                         <div className="flex flex-col items-end shrink-0 ml-4">
                           <div className="text-sm font-semibold font-mono" style={{ color: "#ffffff" }}>
-                            {sym}{tx.price.toFixed(2)}
+                            {isPrivacyModeEnabled ? mask : `${sym}${tx.price.toFixed(2)}`}
                           </div>
                           <div className="text-xs mt-0.5" style={{ color: "#525252" }}>
-                            x{tx.quantity} shares
+                            x{isPrivacyModeEnabled ? mask : tx.quantity} shares
                           </div>
                         </div>
                       </div>

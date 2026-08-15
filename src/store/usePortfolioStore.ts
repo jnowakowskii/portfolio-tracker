@@ -74,12 +74,16 @@ interface PortfolioState {
   isLoadingMarket: boolean;
   apiStats: ApiStat;
 
+  // privacy state
+  isPrivacyModeEnabled: boolean;
+
   // actions
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
   loadTransactions: () => Promise<Transaction[]>;
   importTransactions: (txs: Omit<Transaction, "id">[]) => Promise<void>;
   fetchMarketData: (txs?: Transaction[]) => Promise<void>;
   resetApiStats: () => void;
+  togglePrivacyMode: () => void;
 }
 
 export const usePortfolioStore = create<PortfolioState>()(
@@ -111,7 +115,11 @@ export const usePortfolioStore = create<PortfolioState>()(
       isLoadingMarket: false,
       apiStats: initialApiStats,
 
+      // privacy state
+      isPrivacyModeEnabled: false,
+
       // actions
+      togglePrivacyMode: () => set((state) => ({ isPrivacyModeEnabled: !state.isPrivacyModeEnabled })),
       resetApiStats: () => set({ apiStats: initialApiStats }),
       setBaseCurrency: async (currency: SupportedCurrency) => {
         set({ baseCurrency: currency });
@@ -300,6 +308,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         dividendStats: state.dividendStats,
         topPayers: state.topPayers,
         apiStats: state.apiStats,
+        isPrivacyModeEnabled: state.isPrivacyModeEnabled,
       }),
     }
   )

@@ -28,7 +28,8 @@ const tableCellStyle: React.CSSProperties = {
 };
 
 export function HistoryPage({ onEdit }: HistoryPageProps) {
-  const { transactions, loadTransactions } = usePortfolioStore();
+  const { transactions, loadTransactions, isPrivacyModeEnabled } = usePortfolioStore();
+  const mask = "*****";
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleDeleteClick = (id: number) => {
@@ -110,10 +111,10 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                           </span>
                         </td>
                         <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>
-                          {tx.quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                          {isPrivacyModeEnabled ? mask : tx.quantity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
                         <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>
-                          {tx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                          {isPrivacyModeEnabled ? mask : tx.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                         </td>
                         <td style={tableCellStyle}>{tx.currency}</td>
                         <td style={{ ...tableCellStyle, textAlign: "right" }}>

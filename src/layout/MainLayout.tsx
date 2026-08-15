@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Plus, Minus, X, RefreshCw } from "lucide-react";
+import { Plus, Minus, X, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { NavItem } from "../components/ui/NavItem";
 import { NAV_ITEMS } from "../config/navigation";
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -15,7 +15,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeTab, setActiveTab, onAddTransactionClick }: MainLayoutProps) {
   const appWindow = getCurrentWindow();
-  const { isLoadingMarket } = usePortfolioStore();
+  const { isLoadingMarket, isPrivacyModeEnabled, togglePrivacyMode } = usePortfolioStore();
 
   const topItems = NAV_ITEMS.filter(item => !item.bottom);
   const bottomItems = NAV_ITEMS.filter(item => item.bottom);
@@ -55,6 +55,18 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
 
         {/* actions and controls */}
         <div className="flex items-center gap-4">
+          {/* privacy mode toggle */}
+          <button
+            onClick={togglePrivacyMode}
+            className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 active:scale-95 z-50"
+            style={{ background: isPrivacyModeEnabled ? "rgba(16, 185, 129, 0.1)" : "transparent", color: isPrivacyModeEnabled ? "#10b981" : "#a3a3a3", border: isPrivacyModeEnabled ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid transparent" }}
+            onMouseEnter={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.background = "#262626"; } }}
+            onMouseLeave={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.background = "transparent"; } }}
+            title="Toggle Privacy Mode"
+          >
+            {isPrivacyModeEnabled ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+
           {/* add transaction button */}
           <button
             onClick={onAddTransactionClick}

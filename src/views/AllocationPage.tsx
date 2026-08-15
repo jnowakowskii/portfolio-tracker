@@ -33,9 +33,10 @@ const panelHeader: React.CSSProperties = {
 };
 
 export function AllocationPage() {
-  const { holdings, quotes, fxRates, baseCurrency } = usePortfolioStore();
+  const { holdings, quotes, fxRates, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
   const baseRate = fxRates[baseCurrency] ?? 1.0;
+  const mask = "••••••";
 
   const { holdingsData, totalValue } = useMemo(() => {
     const hData = holdings.map(h => {
@@ -71,7 +72,7 @@ export function AllocationPage() {
             <div className="flex flex-col items-end">
               <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
               <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
-                0.00 <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+                {isPrivacyModeEnabled ? mask : "0.00"} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
               </span>
             </div>
           </div>
@@ -144,7 +145,7 @@ export function AllocationPage() {
           <div className="flex flex-col items-end">
             <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
             <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
-              {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+              {isPrivacyModeEnabled ? mask : totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
             </span>
           </div>
         </div>
@@ -207,15 +208,15 @@ export function AllocationPage() {
                     </div>
                     <div className="col-span-3 flex flex-col items-end overflow-hidden">
                       <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.price} ${item.priceCurrency}`}>
-                        {item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {CURRENCY_SYMBOLS[item.priceCurrency] || item.priceCurrency}
+                        {isPrivacyModeEnabled ? mask : item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.priceCurrency}
                       </span>
                       <span className="text-xs font-mono text-[#737373] mt-0.5 truncate w-full text-right" title={`Avg: ${item.avgCost} ${item.costCurrency}`}>
-                        Avg Cost: {item.avgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {CURRENCY_SYMBOLS[item.costCurrency] || item.costCurrency}
+                        Avg Cost: {isPrivacyModeEnabled ? mask : item.avgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.costCurrency}
                       </span>
                     </div>
                     <div className="col-span-3 flex flex-col items-end justify-center overflow-hidden">
                       <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.value} ${baseCurrency}`}>
-                        {item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {baseSymbol}
+                        {isPrivacyModeEnabled ? mask : item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {baseSymbol}
                       </span>
                     </div>
                     <div className="col-span-2 flex flex-col items-end justify-center overflow-hidden">

@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { ReactNode } from "react";
+import { usePortfolioStore } from "../../store/usePortfolioStore";
 
 interface SummaryCardProps {
   title: string;
@@ -11,6 +12,9 @@ interface SummaryCardProps {
 }
 
 export function SummaryCard({ title, value, change, isPositive, icon, changeIcon }: SummaryCardProps) {
+  const { isPrivacyModeEnabled } = usePortfolioStore();
+  const mask = "*****";
+
   return (
     <div
       className="relative p-6 rounded-xl transition-colors duration-200"
@@ -25,7 +29,9 @@ export function SummaryCard({ title, value, change, isPositive, icon, changeIcon
         </div>
       </div>
 
-      <h3 className="text-2xl font-bold font-mono mb-3 tracking-tight" style={{ color: "#ffffff" }}>{value}</h3>
+      <h3 className="text-2xl font-bold font-mono mb-3 tracking-tight" style={{ color: "#ffffff" }}>
+        {isPrivacyModeEnabled ? mask : value}
+      </h3>
 
       <span
         className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded"
@@ -35,7 +41,7 @@ export function SummaryCard({ title, value, change, isPositive, icon, changeIcon
         }
       >
         {changeIcon !== undefined ? changeIcon : (isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />)}
-        {change}
+        {isPrivacyModeEnabled ? mask : change}
       </span>
     </div>
   );
