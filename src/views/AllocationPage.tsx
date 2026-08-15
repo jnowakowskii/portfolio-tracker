@@ -36,7 +36,7 @@ export function AllocationPage() {
   const { holdings, quotes, fxRates, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
   const baseSymbol = CURRENCY_SYMBOLS[baseCurrency] ?? baseCurrency;
   const baseRate = fxRates[baseCurrency] ?? 1.0;
-  const mask = "••••••";
+  const mask = "*****";
 
   const { holdingsData, totalValue } = useMemo(() => {
     const hData = holdings.map(h => {
@@ -100,7 +100,7 @@ export function AllocationPage() {
             <div className="flex items-center justify-between gap-6">
               <span className="text-xs" style={{ color: "#a3a3a3" }}>Value</span>
               <span className="text-xs font-mono font-medium" style={{ color: "#e5e5e5" }}>
-                {formattedValue} {baseSymbol}
+                {isPrivacyModeEnabled ? mask : `${formattedValue} ${baseSymbol}`}
               </span>
             </div>
             <div className="flex items-center justify-between gap-6">

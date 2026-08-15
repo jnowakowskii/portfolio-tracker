@@ -31,7 +31,7 @@ export function DashboardPage() {
     portfolioHistory,
     isPrivacyModeEnabled,
   } = usePortfolioStore();
-  const mask = "••••••";
+  const mask = "*****";
 
   const [timeRange, setTimeRange] = useState<'3M' | '6M' | 'YTD' | '1Y' | '5Y'>('3M');
 
@@ -148,7 +148,7 @@ export function DashboardPage() {
                       contentStyle={{ backgroundColor: '#171717', borderColor: '#262626', color: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
                       itemStyle={{ color: CHART_COLOR, fontWeight: 600 }}
                       labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
-                      formatter={(value: any) => [`${formatCurrency(Number(value), baseSymbol)}`, 'Value']}
+                      formatter={(value: any) => [isPrivacyModeEnabled ? mask : `${formatCurrency(Number(value), baseSymbol)}`, 'Value']}
                     />
                     <Area
                       type="monotone"

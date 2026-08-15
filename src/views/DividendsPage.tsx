@@ -57,10 +57,12 @@ export function DividendsPage() {
                   }}
                   itemStyle={{ color: "#f5f5f5" }}
                   formatter={(value: any) => [
-                    `${Number(value).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })} ${baseCurrency}`,
+                    isPrivacyModeEnabled 
+                      ? mask
+                      : `${Number(value).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })} ${baseCurrency}`,
                     "Income"
                   ]}
                 />
