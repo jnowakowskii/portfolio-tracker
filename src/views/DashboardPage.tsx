@@ -100,7 +100,7 @@ export function DashboardPage() {
               style={{ borderBottom: "1px solid #262626" }}
             >
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
-                Portfolio Performance
+                Portfolio Value Over Time
               </span>
               <div className="flex bg-[#262626] rounded-lg p-1">
                 {(['3M', '6M', 'YTD', '1Y', '5Y'] as const).map(range => (
