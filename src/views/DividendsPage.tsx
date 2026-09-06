@@ -32,25 +32,25 @@ export function DividendsPage() {
           <div className="flex-1 w-full h-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyDividends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-secondary)" vertical={false} />
                 <XAxis
                   dataKey="month"
-                  stroke="#a3a3a3"
+                  stroke="var(--text-muted)"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
-                  stroke="#a3a3a3"
+                  stroke="var(--text-muted)"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(val) => `${val}`}
                 />
                 <Tooltip
-                  cursor={{ fill: "#262626" }}
+                  cursor={{ fill: "var(--border-primary)" }}
                   contentStyle={{
-                    backgroundColor: "#171717",
+                    backgroundColor: "var(--bg-panel)",
                     border: "1px solid #404040",
                     borderRadius: "8px",
                     color: "#f5f5f5",

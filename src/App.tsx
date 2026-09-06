@@ -29,6 +29,16 @@ function App() {
     );
   }, []);
 
+  // Theme observer
+  useEffect(() => {
+    const unsub = usePortfolioStore.subscribe((state) => {
+      document.documentElement.setAttribute("data-theme", state.theme);
+    });
+    // set initial
+    document.documentElement.setAttribute("data-theme", usePortfolioStore.getState().theme);
+    return unsub;
+  }, []);
+
   const handleEditTransaction = (tx: Transaction) => {
     setEditTransactionData(tx);
     setIsModalOpen(true);

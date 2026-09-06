@@ -21,7 +21,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
   const bottomItems = NAV_ITEMS.filter(item => item.bottom);
 
   return (
-    <div className="flex flex-col h-screen font-sans" style={{ background: "#0a0a0a", color: "#ffffff" }}>
+    <div className="flex flex-col h-screen font-sans" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
 
       {/* unified header */}
       <header
@@ -32,11 +32,11 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
-            style={{ background: "#ffffff" }}
+            style={{ background: "var(--text-primary)" }}
           >
             <img src={logoUrl} alt="Callisto logo" className="w-full h-full object-cover" />
           </div>
-          <span className="text-base font-semibold tracking-tight" style={{ color: "#ffffff" }}>Callisto</span>
+          <span className="text-base font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Callisto</span>
           {isLoadingMarket && <RefreshCw size={14} className="text-neutral-500 animate-spin ml-2" />}
         </div>
 
@@ -59,9 +59,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           <button
             onClick={togglePrivacyMode}
             className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 active:scale-95 z-50"
-            style={{ background: isPrivacyModeEnabled ? "rgba(16, 185, 129, 0.1)" : "transparent", color: isPrivacyModeEnabled ? "#10b981" : "#a3a3a3", border: isPrivacyModeEnabled ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid transparent" }}
-            onMouseEnter={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.background = "#262626"; } }}
-            onMouseLeave={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.background = "transparent"; } }}
+            style={{ background: isPrivacyModeEnabled ? "var(--color-success-bg)" : "transparent", color: isPrivacyModeEnabled ? "var(--color-success)" : "var(--text-muted)", border: isPrivacyModeEnabled ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid transparent" }}
+            onMouseEnter={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "var(--border-primary)"; } }}
+            onMouseLeave={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "transparent"; } }}
             title="Toggle Privacy Mode"
           >
             {isPrivacyModeEnabled ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -71,9 +71,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           <button
             onClick={onAddTransactionClick}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 group z-50"
-            style={{ background: "#ffffff", color: "#0a0a0a", border: "1px solid #ffffff" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
+            style={{ background: "var(--text-primary)", color: "var(--bg-base)", border: "1px solid #ffffff" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
           >
             <Plus size={16} className="transition-transform group-hover:rotate-90" />
             Add Transaction
@@ -97,9 +97,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             <button
               onClick={() => appWindow.minimize().catch(e => alert("Minimize error: " + e))}
               className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
-              style={{ color: "#525252" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#262626"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#525252"; }}
+              style={{ color: "var(--text-quaternary)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--border-primary)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-quaternary)"; }}
               title="Minimize"
             >
               <Minus size={14} strokeWidth={2} />
@@ -107,9 +107,9 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
             <button
               onClick={() => appWindow.close().catch(e => alert("Close error: " + e))}
               className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
-              style={{ color: "#525252" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#525252"; }}
+              style={{ color: "var(--text-quaternary)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.color = "var(--text-primary)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-quaternary)"; }}
               title="Close"
             >
               <X size={14} strokeWidth={2} />

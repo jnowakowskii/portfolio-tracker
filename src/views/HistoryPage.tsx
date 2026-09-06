@@ -16,14 +16,14 @@ const tableHeaderStyle: React.CSSProperties = {
   fontWeight: 600,
   textTransform: "uppercase",
   letterSpacing: "0.05em",
-  color: "#737373",
+  color: "var(--text-tertiary)",
   borderBottom: "1px solid #262626",
 };
 
 const tableCellStyle: React.CSSProperties = {
   padding: "14px 16px",
   fontSize: "14px",
-  color: "#e5e5e5",
+  color: "var(--text-secondary)",
   borderBottom: "1px solid #1f1f1f",
 };
 
@@ -54,20 +54,20 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
   return (
     <div className="flex items-start justify-center min-h-full py-4">
       <div className="w-full max-w-5xl space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
           Transaction History
         </h1>
 
         <div
           style={{
-            background: "#171717",
+            background: "var(--bg-panel)",
             border: "1px solid #262626",
             borderRadius: "12px",
             overflow: "hidden",
           }}
         >
           {transactions.length === 0 ? (
-            <div className="p-8 text-center" style={{ color: "#737373" }}>
+            <div className="p-8 text-center" style={{ color: "var(--text-tertiary)" }}>
               <p className="text-sm">No transactions found.</p>
             </div>
           ) : (
@@ -90,7 +90,7 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                     const dateStr = dateObj.toLocaleDateString();
 
                     const isBuy = tx.side === "BUY";
-                    const sideColor = isBuy ? "#10b981" : "#f43f5e";
+                    const sideColor = isBuy ? "var(--color-success)" : "var(--color-danger)";
                     const sideBg = isBuy ? "rgba(16,185,129,0.12)" : "rgba(244,63,94,0.1)";
                     const sideBorder = isBuy ? "rgba(16,185,129,0.25)" : "rgba(244,63,94,0.2)";
 
@@ -122,13 +122,13 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                             <button
                               onClick={() => onEdit(tx)}
                               className="p-1.5 rounded transition-colors"
-                              style={{ color: "#a3a3a3" }}
+                              style={{ color: "var(--text-muted)" }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.color = "#ffffff";
-                                e.currentTarget.style.background = "#262626";
+                                e.currentTarget.style.color = "var(--text-primary)";
+                                e.currentTarget.style.background = "var(--border-primary)";
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.color = "#a3a3a3";
+                                e.currentTarget.style.color = "var(--text-muted)";
                                 e.currentTarget.style.background = "transparent";
                               }}
                               title="Edit"
@@ -170,29 +170,29 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
         >
           <div
             className="w-full max-w-sm rounded-xl overflow-hidden"
-            style={{ background: "#171717", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+            style={{ background: "var(--bg-panel)", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
           >
             <div className="px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
-              <h2 className="text-base font-semibold" style={{ color: "#ffffff" }}>Delete Transaction</h2>
+              <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Delete Transaction</h2>
             </div>
             <div className="p-6 space-y-5">
-              <p className="text-sm" style={{ color: "#a3a3a3" }}>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 Are you sure you want to delete this transaction? This action cannot be undone.
               </p>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setDeleteTargetId(null)}
                   className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-                  style={{ background: "transparent", border: "1px solid #262626", color: "#a3a3a3" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "#404040"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.borderColor = "#262626"; }}
+                  style={{ background: "transparent", border: "1px solid #262626", color: "var(--text-muted)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
                   className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
-                  style={{ background: "#dc2626", color: "#ffffff", border: "1px solid #dc2626" }}
+                  style={{ background: "#dc2626", color: "var(--text-primary)", border: "1px solid #dc2626" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "#b91c1c"; e.currentTarget.style.borderColor = "#b91c1c"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.borderColor = "#dc2626"; }}
                 >

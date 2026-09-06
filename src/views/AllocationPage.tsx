@@ -19,7 +19,7 @@ const COLORS = [
 
 
 const panel: React.CSSProperties = {
-  background: "#171717",
+  background: "var(--bg-panel)",
   border: "1px solid #262626",
   borderRadius: "12px",
   overflow: "hidden",
@@ -68,19 +68,19 @@ export function AllocationPage() {
       <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
         <div className="w-full max-w-6xl space-y-6 flex-1 flex flex-col">
           <div className="flex items-end justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Allocation</h1>
             <div className="flex flex-col items-end">
-              <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
-              <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
+              <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>Total Value</span>
+              <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "var(--text-primary)" }}>
                 {isPrivacyModeEnabled ? mask : "0.00"} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
               </span>
             </div>
           </div>
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#262626" }}>
-              <PieChartIcon size={22} style={{ color: "#525252" }} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "var(--border-primary)" }}>
+              <PieChartIcon size={22} style={{ color: "var(--text-quaternary)" }} />
             </div>
-            <p className="text-sm font-medium" style={{ color: "#737373" }}>No data to display. Add transactions to see your allocation.</p>
+            <p className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>No data to display. Add transactions to see your allocation.</p>
           </div>
         </div>
       </div>
@@ -94,18 +94,18 @@ export function AllocationPage() {
       const formattedValue = data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       return (
-        <div className="p-3 rounded-lg shadow-xl border" style={{ background: "#0a0a0a", borderColor: "#262626" }}>
-          <p className="text-sm font-medium mb-2" style={{ color: "#e5e5e5" }}>{data.name}</p>
+        <div className="p-3 rounded-lg shadow-xl border" style={{ background: "var(--bg-base)", borderColor: "var(--border-primary)" }}>
+          <p className="text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>{data.name}</p>
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between gap-6">
-              <span className="text-xs" style={{ color: "#a3a3a3" }}>Value</span>
-              <span className="text-xs font-mono font-medium" style={{ color: "#e5e5e5" }}>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>Value</span>
+              <span className="text-xs font-mono font-medium" style={{ color: "var(--text-secondary)" }}>
                 {isPrivacyModeEnabled ? mask : `${formattedValue} ${baseSymbol}`}
               </span>
             </div>
             <div className="flex items-center justify-between gap-6">
-              <span className="text-xs" style={{ color: "#a3a3a3" }}>Allocation</span>
-              <span className="text-xs font-mono font-medium" style={{ color: "#e5e5e5" }}>
+              <span className="text-xs" style={{ color: "var(--text-muted)" }}>Allocation</span>
+              <span className="text-xs font-mono font-medium" style={{ color: "var(--text-secondary)" }}>
                 {percent}%
               </span>
             </div>
@@ -127,8 +127,8 @@ export function AllocationPage() {
             <li key={`item-${index}`} className="flex items-center gap-2">
               <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: entry.color, display: "inline-block" }} />
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium" style={{ color: "#a3a3a3" }}>{entry.value}</span>
-                <span className="text-[10px]" style={{ color: "#737373" }}>{percent}%</span>
+                <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{entry.value}</span>
+                <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{percent}%</span>
               </div>
             </li>
           );
@@ -141,10 +141,10 @@ export function AllocationPage() {
     <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
       <div className="w-full max-w-6xl space-y-6 flex-1">
         <div className="flex items-end justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Allocation</h1>
+          <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Allocation</h1>
           <div className="flex flex-col items-end">
-            <span className="text-sm font-medium" style={{ color: "#737373" }}>Total Value</span>
-            <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "#ffffff" }}>
+            <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>Total Value</span>
+            <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "var(--text-primary)" }}>
               {isPrivacyModeEnabled ? mask : totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
             </span>
           </div>
@@ -152,7 +152,7 @@ export function AllocationPage() {
 
         <div style={panel}>
           <div style={panelHeader}>
-            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
               Holdings by ticker
             </span>
           </div>
@@ -167,7 +167,7 @@ export function AllocationPage() {
                   outerRadius={160}
                   paddingAngle={1}
                   dataKey="value"
-                  stroke="#171717"
+                  stroke="var(--bg-panel)"
                   strokeWidth={3}
                   isAnimationActive={false}
                 >
@@ -184,7 +184,7 @@ export function AllocationPage() {
 
         <div style={panel}>
           <div style={panelHeader}>
-            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+            <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
               Assets Breakdown
             </span>
           </div>

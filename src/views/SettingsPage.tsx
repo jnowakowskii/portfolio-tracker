@@ -9,7 +9,7 @@ import { usePortfolioStore } from "../store/usePortfolioStore";
 type ResetStep = "idle" | "confirm-text" | "final-warning";
 
 const panel: React.CSSProperties = {
-  background: "#171717",
+  background: "var(--bg-panel)",
   border: "1px solid #262626",
   borderRadius: "12px",
   overflow: "hidden",
@@ -25,8 +25,8 @@ const panelHeader: React.CSSProperties = {
 function StatRow({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between py-2.5" style={{ borderBottom: "1px solid #1f1f1f" }}>
-      <span className="text-xs" style={{ color: "#737373" }}>{label}</span>
-      <span className={`text-xs font-semibold ${mono ? "font-mono" : ""}`} style={{ color: "#e5e5e5" }}>
+      <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</span>
+      <span className={`text-xs font-semibold ${mono ? "font-mono" : ""}`} style={{ color: "var(--text-secondary)" }}>
         {value}
       </span>
     </div>
@@ -47,6 +47,8 @@ export function SettingsPage() {
     baseCurrency,
     setBaseCurrency,
     apiStats,
+    theme,
+    setTheme,
     resetApiStats,
     loadTransactions,
     fetchMarketData,
@@ -155,10 +157,10 @@ export function SettingsPage() {
   };
 
   const statusColor = apiStats.yahooStatus === "online"
-    ? "#10b981"
+    ? "var(--color-success)"
     : apiStats.yahooStatus === "error"
-      ? "#f43f5e"
-      : "#737373";
+      ? "var(--color-danger)"
+      : "var(--text-tertiary)";
 
   const statusLabel = apiStats.yahooStatus === "online"
     ? "Online"
@@ -170,36 +172,54 @@ export function SettingsPage() {
     <div className="flex flex-col items-center py-4 w-full" style={{ minHeight: "88vh" }}>
       <div className="w-full max-w-2xl space-y-6 flex-1">
 
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "#ffffff" }}>Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>Settings</h1>
 
         {/* general section */}
         <div style={panel}>
           <div style={panelHeader}>
             <div className="flex items-center gap-2.5">
-              <SlidersHorizontal size={15} style={{ color: "#737373" }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+              <SlidersHorizontal size={15} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
                 General
               </span>
             </div>
           </div>
           <div className="flex items-center justify-between px-6 py-5">
             <div>
-              <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Base Currency</p>
-              <p className="text-xs mt-1" style={{ color: "#737373" }}>All portfolio values are displayed in this currency.</p>
+              <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Base Currency</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>All portfolio values are displayed in this currency.</p>
             </div>
             <div className="relative">
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)" }} />
               <select
                 value={baseCurrency}
                 onChange={(e) => setBaseCurrency(e.target.value as SupportedCurrency)}
                 className="appearance-none rounded-lg pl-3 pr-8 py-2 text-sm font-mono cursor-pointer focus:outline-none transition-colors"
-                style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#ffffff", minWidth: "110px" }}
+                style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-primary)", minWidth: "110px" }}
               >
                 {SUPPORTED_CURRENCIES.map(c => (
-                  <option key={c} value={c} style={{ background: "#171717" }}>
+                  <option key={c} value={c} style={{ background: "var(--bg-panel)" }}>
                     {CURRENCY_SYMBOLS[c]} {c}
                   </option>
                 ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center justify-between px-6 py-5 border-t border-[var(--border-primary)]" style={{ borderTop: "1px solid var(--border-primary)" }}>
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Theme</p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Choose between dark and light mode.</p>
+            </div>
+            <div className="relative">
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)" }} />
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as "dark" | "light")}
+                className="appearance-none rounded-lg pl-3 pr-8 py-2 text-sm font-mono cursor-pointer focus:outline-none transition-colors"
+                style={{ background: "var(--bg-base)", border: "1px solid var(--border-primary)", color: "var(--text-primary)", minWidth: "110px" }}
+              >
+                <option value="dark" style={{ background: "var(--bg-panel)" }}>Dark</option>
+                <option value="light" style={{ background: "var(--bg-panel)" }}>Light</option>
               </select>
             </div>
           </div>
@@ -209,33 +229,33 @@ export function SettingsPage() {
         <div style={panel}>
           <div style={panelHeader}>
             <div className="flex items-center gap-2.5">
-              <DatabaseZap size={15} style={{ color: "#737373" }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>Data Backup & Restore</span>
+              <DatabaseZap size={15} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Data Backup & Restore</span>
             </div>
           </div>
           <div className="px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Export / Import Portfolio</p>
-                <p className="text-xs mt-1" style={{ color: "#737373" }}>Save your data to a file or restore from a backup.</p>
+                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Export / Import Portfolio</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Save your data to a file or restore from a backup.</p>
               </div>
               {importStep === "idle" && (
                 <div className="flex gap-2">
                   <button
                     onClick={handleExport}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "#262626", color: "#e5e5e5", border: "1px solid #404040" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#333333"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#262626"; }}
+                    style={{ background: "var(--border-primary)", color: "var(--text-secondary)", border: "1px solid #404040" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover-darker)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "var(--border-primary)"; }}
                   >
                     <Download size={14} /> Export
                   </button>
                   <button
                     onClick={handleImportClick}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "#0a0a0a", color: "#a3a3a3", border: "1px solid #262626" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; }}
+                    style={{ background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid #262626" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-base)"; e.currentTarget.style.color = "var(--text-muted)"; }}
                   >
                     <Upload size={14} /> Import
                   </button>
@@ -244,17 +264,17 @@ export function SettingsPage() {
             </div>
 
             {importStep === "confirm" && (
-              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.2)" }}>
-                <p className="text-xs font-semibold" style={{ color: "#eab308" }}>Confirm Import</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                  This will completely overwrite your current portfolio with <span style={{ color: "#e5e5e5", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "var(--color-warning-bg)", border: "1px solid rgba(234,179,8,0.2)" }}>
+                <p className="text-xs font-semibold" style={{ color: "var(--color-warning)" }}>Confirm Import</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  This will completely overwrite your current portfolio with <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={confirmImport}
                     disabled={isImporting}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-50 active:scale-95"
-                    style={{ background: "#eab308", color: "#0a0a0a" }}
+                    style={{ background: "var(--color-warning)", color: "var(--bg-base)" }}
                   >
                     <Upload size={14} />
                     {isImporting ? "Importing…" : "Yes, overwrite data"}
@@ -263,9 +283,9 @@ export function SettingsPage() {
                     onClick={cancelImport}
                     disabled={isImporting}
                     className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-                    style={{ color: "#737373" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
+                    style={{ color: "var(--text-tertiary)" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "var(--text-tertiary)")}
                   >
                     Cancel
                   </button>
@@ -282,19 +302,19 @@ export function SettingsPage() {
             className="w-full flex items-center justify-between px-6 py-4 transition-colors"
             style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "1px solid transparent" }}
             onClick={() => setDiagnosticsOpen(o => !o)}
-            onMouseEnter={e => (e.currentTarget.style.background = "#1c1c1c")}
+            onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
             <div className="flex items-center gap-2.5">
-              <Activity size={15} style={{ color: "#737373" }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+              <Activity size={15} style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
                 API & System Diagnostics
               </span>
             </div>
             <ChevronDown
               size={16}
               style={{
-                color: "#525252",
+                color: "var(--text-quaternary)",
                 transform: diagnosticsOpen ? "rotate(180deg)" : "rotate(0deg)",
                 transition: "transform 0.75s ease",
               }}
@@ -324,26 +344,26 @@ export function SettingsPage() {
                   }
                 />
                 <StatRow label="Total Requests" value={apiStats.totalRequests} />
-                <StatRow label="Successful Calls" value={<span style={{ color: "#10b981" }}>{apiStats.successfulCalls}</span>} />
-                <StatRow label="Failed Calls" value={<span style={{ color: apiStats.failedCalls > 0 ? "#f43f5e" : "#737373" }}>{apiStats.failedCalls}</span>} />
+                <StatRow label="Successful Calls" value={<span style={{ color: "var(--color-success)" }}>{apiStats.successfulCalls}</span>} />
+                <StatRow label="Failed Calls" value={<span style={{ color: apiStats.failedCalls > 0 ? "var(--color-danger)" : "var(--text-tertiary)" }}>{apiStats.failedCalls}</span>} />
                 <StatRow label="Average Latency" value={apiStats.totalRequests === 0 ? "—" : `${apiStats.avgLatencyMs} ms`} />
                 <StatRow label="Last Update" value={formatTime(apiStats.lastFetchTime)} />
               </div>
 
               {/* error log */}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#525252" }}>Error Log (last 3)</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-quaternary)" }}>Error Log (last 3)</p>
                 <div
                   className="rounded-lg p-3 space-y-1.5 overflow-y-auto"
-                  style={{ background: "#0a0a0a", border: "1px solid #262626", maxHeight: "100px", minHeight: "52px" }}
+                  style={{ background: "var(--bg-base)", border: "1px solid #262626", maxHeight: "100px", minHeight: "52px" }}
                 >
                   {!apiStats?.errors || apiStats.errors.length === 0 ? (
-                    <p className="text-xs font-mono" style={{ color: "#404040" }}>No errors recorded.</p>
+                    <p className="text-xs font-mono" style={{ color: "var(--border-secondary)" }}>No errors recorded.</p>
                   ) : (
                     apiStats.errors.map((e, i) => (
                       <div key={i} className="flex gap-2 text-xs font-mono leading-snug">
-                        <span style={{ color: "#525252", shrink: 0 } as React.CSSProperties}>[{formatTime(e.time)}]</span>
-                        <span style={{ color: "#f43f5e", wordBreak: "break-all" }}>{e.message}</span>
+                        <span style={{ color: "var(--text-quaternary)", shrink: 0 } as React.CSSProperties}>[{formatTime(e.time)}]</span>
+                        <span style={{ color: "var(--color-danger)", wordBreak: "break-all" }}>{e.message}</span>
                       </div>
                     ))
                   )}
@@ -355,9 +375,9 @@ export function SettingsPage() {
                 <button
                   onClick={resetApiStats}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                  style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#a3a3a3" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "#404040"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.borderColor = "#262626"; }}
+                  style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-muted)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-base)"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
                 >
                   <RotateCcw size={13} />
                   Clear Stats
@@ -366,9 +386,9 @@ export function SettingsPage() {
                   onClick={handleForceRefresh}
                   disabled={isRefreshing || !canRefresh}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: "#ffffff", border: "1px solid #ffffff", color: "#0a0a0a" }}
-                  onMouseEnter={e => { if (!isRefreshing && canRefresh) { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; } }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
+                  style={{ background: "var(--text-primary)", border: "1px solid #ffffff", color: "var(--bg-base)" }}
+                  onMouseEnter={e => { if (!isRefreshing && canRefresh) { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
                 >
                   <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} />
                   {isRefreshing ? "Refreshing…" : !canRefresh ? `Wait ${Math.ceil(cooldownRemaining / 1000)}s` : "Refresh Data"}
@@ -391,8 +411,8 @@ export function SettingsPage() {
           <div className="px-6 py-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium" style={{ color: "#ffffff" }}>Reset Portfolio</p>
-                <p className="text-xs mt-1" style={{ color: "#737373" }}>Delete all transactions. This cannot be undone.</p>
+                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Reset Portfolio</p>
+                <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>Delete all transactions. This cannot be undone.</p>
               </div>
               {resetStep === "idle" && (
                 <button
@@ -409,9 +429,9 @@ export function SettingsPage() {
 
             {resetStep === "confirm-text" && (
               <div className="p-4 rounded-lg space-y-4" style={{ background: "#1a1400", border: "1px solid rgba(234,179,8,0.2)" }}>
-                <p className="text-xs font-semibold" style={{ color: "#eab308" }}>⚠ Warning: Destructive Action</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>
-                  Type <code className="px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: "#0a0a0a", color: "#eab308" }}>CONFIRM</code> to continue.
+                <p className="text-xs font-semibold" style={{ color: "var(--color-warning)" }}>⚠ Warning: Destructive Action</p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  Type <code className="px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: "var(--bg-base)", color: "var(--color-warning)" }}>CONFIRM</code> to continue.
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -422,22 +442,22 @@ export function SettingsPage() {
                     placeholder='Type "CONFIRM"'
                     autoFocus
                     className="flex-1 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none"
-                    style={{ background: "#0a0a0a", border: "1px solid #262626", color: "#ffffff" }}
+                    style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-primary)" }}
                   />
                   <button
                     onClick={handleConfirmText}
                     disabled={confirmInput !== "CONFIRM"}
                     className="px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-30"
-                    style={{ background: "#eab308", color: "#0a0a0a" }}
+                    style={{ background: "var(--color-warning)", color: "var(--bg-base)" }}
                   >
                     OK
                   </button>
                   <button
                     onClick={handleCancel}
                     className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-                    style={{ color: "#737373" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
+                    style={{ color: "var(--text-tertiary)" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "var(--text-tertiary)")}
                   >
                     Cancel
                   </button>
@@ -448,7 +468,7 @@ export function SettingsPage() {
             {resetStep === "final-warning" && (
               <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}>
                 <p className="text-xs font-semibold" style={{ color: "#ef4444" }}>Are you absolutely sure?</p>
-                <p className="text-xs" style={{ color: "#a3a3a3" }}>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                   This is your <span style={{ color: "#ef4444", fontWeight: 600 }}>last chance</span> to cancel. All data will be erased permanently.
                 </p>
                 <div className="flex gap-2">
@@ -467,9 +487,9 @@ export function SettingsPage() {
                     onClick={handleCancel}
                     disabled={isResetting}
                     className="px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-                    style={{ color: "#737373" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "#ffffff")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "#737373")}
+                    style={{ color: "var(--text-tertiary)" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "var(--text-tertiary)")}
                   >
                     No, keep my data
                   </button>
@@ -481,7 +501,7 @@ export function SettingsPage() {
       </div>
 
       <div className="w-full max-w-2xl pt-12 pb-2 text-center mt-auto">
-        <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "#3f3f3fff" }}>
+        <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "var(--text-tertiary)" }}>
           Callisto Beta v0.3.0<br /><br />
           © 2026 jakubnowakowski.com<br />
           Data via Yahoo Finance

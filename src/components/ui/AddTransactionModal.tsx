@@ -12,11 +12,11 @@ interface AddTransactionModalProps {
 
 const inputBase: React.CSSProperties = {
   width: "100%",
-  background: "#0a0a0a",
+  background: "var(--bg-base)",
   border: "1px solid #262626",
   borderRadius: "8px",
   padding: "10px 12px 10px 36px",
-  color: "#ffffff",
+  color: "var(--text-primary)",
   fontSize: "14px",
   fontFamily: "monospace",
   outline: "none",
@@ -29,7 +29,7 @@ const inputFocus: React.CSSProperties = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-semibold uppercase tracking-widest" style={{ color: "#737373" }}>
+      <label className="block text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
         {label}
       </label>
       {children}
@@ -96,7 +96,7 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
 
   return (
     <div className="relative" ref={containerRef}>
-      <CalendarIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252", zIndex: 10 }} />
+      <CalendarIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)", zIndex: 10 }} />
       <input
         type="text"
         readOnly
@@ -112,7 +112,7 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
         <div
           className="absolute z-50 mt-2 p-4 rounded-xl shadow-2xl"
           style={{
-            background: "#171717",
+            background: "var(--bg-panel)",
             border: "1px solid #262626",
             width: "280px",
             left: "0",
@@ -381,19 +381,19 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
     >
       <div
         className="w-full max-w-md rounded-xl"
-        style={{ background: "#171717", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+        style={{ background: "var(--bg-panel)", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
       >
         {/* header section */}
         <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
-          <h2 className="text-base font-semibold" style={{ color: "#ffffff" }}>
+          <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
             {editData ? "Edit Transaction" : "Add Transaction"}
           </h2>
           <button
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-md transition-colors"
-            style={{ color: "#737373" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#262626"; e.currentTarget.style.color = "#ffffff"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#737373"; }}
+            style={{ color: "var(--text-tertiary)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--border-primary)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-tertiary)"; }}
           >
             <X size={16} />
           </button>
@@ -405,7 +405,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
           {/* symbol field */}
           <Field label="Symbol">
             <div className="relative" ref={searchContainerRef}>
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)" }} />
               <input
                 type="text"
                 value={symbol}
@@ -428,7 +428,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                 <div
                   className="absolute z-50 mt-1 w-full rounded-lg shadow-2xl overflow-hidden flex flex-col"
                   style={{
-                    background: "#171717",
+                    background: "var(--bg-panel)",
                     border: "1px solid #262626",
                     top: "100%",
                     left: 0,
@@ -436,7 +436,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   }}
                 >
                   {isSearching ? (
-                    <div className="p-3 text-sm font-medium" style={{ color: "#737373", textAlign: "center" }}>Searching...</div>
+                    <div className="p-3 text-sm font-medium" style={{ color: "var(--text-tertiary)", textAlign: "center" }}>Searching...</div>
                   ) : (
                     <div className="overflow-y-auto">
                       {searchResults.map((res, i) => (
@@ -449,13 +449,13 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                           }}
                           className="px-3 py-2 cursor-pointer transition-colors"
                           style={{ borderBottom: i < searchResults.length - 1 ? "1px solid #262626" : "none" }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#262626"}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--border-primary)"}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                         >
                           <div className="flex items-center justify-between mb-0.5">
-                            <span className="font-mono font-bold text-sm" style={{ color: "#ffffff" }}>{res.symbol}</span>
+                            <span className="font-mono font-bold text-sm" style={{ color: "var(--text-primary)" }}>{res.symbol}</span>
                             {res.exchange && (
-                              <span className="text-xs uppercase flex items-center" style={{ color: "#737373" }}>
+                              <span className="text-xs uppercase flex items-center" style={{ color: "var(--text-tertiary)" }}>
                                 {(() => {
                                   const flagCode = getExchangeFlag(res.exchange, res.quoteType);
                                   if (flagCode === "crypto") {
@@ -480,11 +480,11 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                             )}
                           </div>
                           <div className="flex items-center mt-1">
-                            {res.shortname && <div className="text-xs truncate mr-2" style={{ color: "#a3a3a3" }}>{res.shortname}</div>}
+                            {res.shortname && <div className="text-xs truncate mr-2" style={{ color: "var(--text-muted)" }}>{res.shortname}</div>}
                             {res.quoteType && (
                               <span
                                 className="ml-auto text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0"
-                                style={{ background: "#262626", color: "#a3a3a3" }}
+                                style={{ background: "var(--border-primary)", color: "var(--text-muted)" }}
                               >
                                 {res.quoteType === "EQUITY" ? "STOCK" : res.quoteType === "CRYPTOCURRENCY" ? "CRYPTO" : res.quoteType}
                               </span>
@@ -510,9 +510,9 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   className="py-2.5 rounded-lg text-sm font-bold transition-all duration-150"
                   style={side === s
                     ? s === "BUY"
-                      ? { background: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.25)" }
-                      : { background: "rgba(244,63,94,0.1)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.2)" }
-                    : { background: "#0a0a0a", color: "#525252", border: "1px solid #262626" }
+                      ? { background: "rgba(16,185,129,0.12)", color: "var(--color-success)", border: "1px solid rgba(16,185,129,0.25)" }
+                      : { background: "rgba(244,63,94,0.1)", color: "var(--color-danger)", border: "1px solid rgba(244,63,94,0.2)" }
+                    : { background: "var(--bg-base)", color: "var(--text-quaternary)", border: "1px solid #262626" }
                   }
                 >
                   {s}
@@ -524,7 +524,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
           {/* currency field */}
           <Field label="Currency">
             <div className="relative">
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)" }} />
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as SupportedCurrency)}
@@ -533,7 +533,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                 onBlur={handleBlur as React.FocusEventHandler<HTMLSelectElement>}
               >
                 {SUPPORTED_CURRENCIES.map(c => (
-                  <option key={c} value={c} style={{ background: "#171717" }}>
+                  <option key={c} value={c} style={{ background: "var(--bg-panel)" }}>
                     {CURRENCY_SYMBOLS[c]} {c}
                   </option>
                 ))}
@@ -545,7 +545,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
           <div className="grid grid-cols-2 gap-4">
             <Field label="Quantity">
               <div className="relative">
-                <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#525252" }} />
+                <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-quaternary)" }} />
                 <input type="number" step="any" value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder="0.00" style={{ ...inputBase }}
@@ -557,7 +557,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
 
             <Field label={`Price per share (${currencySymbol})`}>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono pointer-events-none" style={{ color: "#525252" }}>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono pointer-events-none" style={{ color: "var(--text-quaternary)" }}>
                   {currencySymbol}
                 </span>
                 <input type="number" step="any" value={price}
@@ -581,18 +581,18 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
               type="button"
               onClick={onClose}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-              style={{ background: "transparent", border: "1px solid #262626", color: "#a3a3a3" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#1c1c1c"; e.currentTarget.style.color = "#ffffff"; e.currentTarget.style.borderColor = "#404040"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#a3a3a3"; e.currentTarget.style.borderColor = "#262626"; }}
+              style={{ background: "transparent", border: "1px solid #262626", color: "var(--text-muted)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
-              style={{ background: "#ffffff", color: "#0a0a0a", border: "1px solid #ffffff" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#e5e5e5"; e.currentTarget.style.borderColor = "#e5e5e5"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#ffffff"; }}
+              style={{ background: "var(--text-primary)", color: "var(--bg-base)", border: "1px solid #ffffff" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
             >
               {editData ? "Save Changes" : "Save Transaction"}
             </button>

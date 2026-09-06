@@ -18,26 +18,26 @@ export function SummaryCard({ title, value, change, isPositive, icon, changeIcon
   return (
     <div
       className="relative p-6 rounded-xl transition-colors duration-200"
-      style={{ background: "#171717", border: "1px solid #262626" }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = "#404040")}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = "#262626")}
+      style={{ background: "var(--bg-panel)", border: "1px solid #262626" }}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-secondary)")}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border-primary)")}
     >
       <div className="flex justify-between items-start mb-5">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#a3a3a3" }}>{title}</p>
-        <div className="p-1.5 rounded-lg" style={{ background: "#262626", color: "#a3a3a3" }}>
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{title}</p>
+        <div className="p-1.5 rounded-lg" style={{ background: "var(--border-primary)", color: "var(--text-muted)" }}>
           {icon}
         </div>
       </div>
 
-      <h3 className="text-2xl font-bold font-mono mb-3 tracking-tight" style={{ color: "#ffffff" }}>
+      <h3 className="text-2xl font-bold font-mono mb-3 tracking-tight" style={{ color: "var(--text-primary)" }}>
         {isPrivacyModeEnabled ? mask : value}
       </h3>
 
       <span
         className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded"
         style={isPositive
-          ? { background: "rgba(16,185,129,0.1)", color: "#10b981", border: "1px solid rgba(16,185,129,0.15)" }
-          : { background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.12)" }
+          ? { background: "rgba(16,185,129,0.1)", color: "var(--color-success)", border: "1px solid rgba(16,185,129,0.15)" }
+          : { background: "rgba(244,63,94,0.08)", color: "var(--color-danger)", border: "1px solid rgba(244,63,94,0.12)" }
         }
       >
         {changeIcon !== undefined ? changeIcon : (isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />)}

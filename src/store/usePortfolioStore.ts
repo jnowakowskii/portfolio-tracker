@@ -58,6 +58,7 @@ interface PortfolioState {
   quotes: MarketQuote[];
   fxRates: FxRates;
   baseCurrency: SupportedCurrency;
+  theme: "dark" | "light";
   
   // calculated state
   portfolioValue: number;
@@ -78,6 +79,7 @@ interface PortfolioState {
   isPrivacyModeEnabled: boolean;
 
   // actions
+  setTheme: (theme: "dark" | "light") => void;
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
   loadTransactions: () => Promise<Transaction[]>;
   importTransactions: (txs: Omit<Transaction, "id">[]) => Promise<void>;
@@ -95,6 +97,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       quotes: [],
       fxRates: { PLN: 1.0 },
       baseCurrency: "PLN", // default overwritten by persist
+      theme: "dark",
       
       // initial calculated state
       portfolioValue: 0,
@@ -119,6 +122,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       isPrivacyModeEnabled: false,
 
       // actions
+      setTheme: (theme) => set({ theme }),
       togglePrivacyMode: () => set((state) => ({ isPrivacyModeEnabled: !state.isPrivacyModeEnabled })),
       resetApiStats: () => set({ apiStats: initialApiStats }),
       setBaseCurrency: async (currency: SupportedCurrency) => {
@@ -300,6 +304,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         quotes: state.quotes,
         fxRates: state.fxRates,
         baseCurrency: state.baseCurrency,
+        theme: state.theme,
         portfolioValue: state.portfolioValue,
         totalCost: state.totalCost,
         portfolioHistory: state.portfolioHistory,

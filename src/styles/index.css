@@ -1,10 +1,63 @@
 @import "tailwindcss";
 
+:root {
+  /* Default Dark Mode */
+  --bg-base: #0a0a0a;
+  --bg-panel: #171717;
+  --bg-hover: #1c1c1c;
+  --bg-hover-darker: #262626;
+  --border-primary: #262626;
+  --border-secondary: #404040;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-tertiary: #737373;
+  --text-quaternary: #525252;
+  
+  --color-success: #10b981;
+  --color-success-bg: rgba(16, 185, 129, 0.1);
+  --color-success-border: rgba(16, 185, 129, 0.2);
+  
+  --color-warning: #eab308;
+  --color-warning-bg: rgba(234, 179, 8, 0.06);
+  --color-warning-border: rgba(234, 179, 8, 0.2);
+  
+  --color-danger: #f43f5e;
+  --color-danger-bg: rgba(244, 63, 94, 0.08);
+  --color-danger-border: rgba(244, 63, 94, 0.2);
+  
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #262626;
+  --scrollbar-thumb-hover: #404040;
+}
+
+[data-theme='light'] {
+  --bg-base: #f9fafb;
+  --bg-panel: #ffffff;
+  --bg-hover: #f3f4f6;
+  --bg-hover-darker: #e5e7eb;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-quaternary: #9ca3af;
+  
+  --scrollbar-track: #f9fafb;
+  --scrollbar-thumb: #d1d5db;
+  --scrollbar-thumb-hover: #9ca3af;
+}
+
 html {
     font-size: 1.25rem;
     /* Firefox */
     scrollbar-width: thin;
-    scrollbar-color: #262626 #0a0a0a;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    background-color: var(--bg-base);
+    color: var(--text-primary);
 }
 
 /* WebKit Custom Scrollbar */
@@ -14,17 +67,17 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #262626;
+    background-color: var(--scrollbar-thumb);
     border-radius: 6px;
-    border: 3px solid #0a0a0a;
+    border: 3px solid var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #404040;
+    background-color: var(--scrollbar-thumb-hover);
 }
 
 .recharts-wrapper,
