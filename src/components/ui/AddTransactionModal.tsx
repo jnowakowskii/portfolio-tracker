@@ -555,7 +555,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
               </div>
             </Field>
 
-            <Field label={`Price (${currencySymbol})`}>
+            <Field label={`Price per share (${currencySymbol})`}>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-mono pointer-events-none" style={{ color: "#525252" }}>
                   {currencySymbol}
