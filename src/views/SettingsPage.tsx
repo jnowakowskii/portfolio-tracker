@@ -10,21 +10,22 @@ type ResetStep = "idle" | "confirm-text" | "final-warning";
 
 const panel: React.CSSProperties = {
   background: "var(--bg-panel)",
-  border: "1px solid #262626",
+  border: "1px solid var(--border-primary)",
   borderRadius: "12px",
   overflow: "hidden",
+  boxShadow: "var(--card-shadow)",
 };
 
 const panelHeader: React.CSSProperties = {
   padding: "14px 24px",
-  borderBottom: "1px solid #262626",
+  borderBottom: "1px solid var(--border-primary)",
 };
 
 // helpers
 
 function StatRow({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: "1px solid #1f1f1f" }}>
+    <div className="flex items-center justify-between py-2.5" style={{ borderBottom: "1px solid var(--border-primary)" }}>
       <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>{label}</span>
       <span className={`text-xs font-semibold ${mono ? "font-mono" : ""}`} style={{ color: "var(--text-secondary)" }}>
         {value}
@@ -195,7 +196,7 @@ export function SettingsPage() {
                 value={baseCurrency}
                 onChange={(e) => setBaseCurrency(e.target.value as SupportedCurrency)}
                 className="appearance-none rounded-lg pl-3 pr-8 py-2 text-sm font-mono cursor-pointer focus:outline-none transition-colors"
-                style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-primary)", minWidth: "110px" }}
+                style={{ background: "var(--bg-base)", border: "1px solid var(--border-primary)", color: "var(--text-primary)", minWidth: "110px" }}
               >
                 {SUPPORTED_CURRENCIES.map(c => (
                   <option key={c} value={c} style={{ background: "var(--bg-panel)" }}>
@@ -244,7 +245,7 @@ export function SettingsPage() {
                   <button
                     onClick={handleExport}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "var(--border-primary)", color: "var(--text-secondary)", border: "1px solid #404040" }}
+                    style={{ background: "var(--border-primary)", color: "var(--text-secondary)", border: "1px solid var(--border-secondary)" }}
                     onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover-darker)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "var(--border-primary)"; }}
                   >
@@ -253,7 +254,7 @@ export function SettingsPage() {
                   <button
                     onClick={handleImportClick}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                    style={{ background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid #262626" }}
+                    style={{ background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid var(--border-primary)" }}
                     onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-base)"; e.currentTarget.style.color = "var(--text-muted)"; }}
                   >
@@ -264,7 +265,7 @@ export function SettingsPage() {
             </div>
 
             {importStep === "confirm" && (
-              <div className="p-4 rounded-lg space-y-4" style={{ background: "var(--color-warning-bg)", border: "1px solid rgba(234,179,8,0.2)" }}>
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "var(--color-warning-bg)", border: "1px solid var(--color-warning-border)" }}>
                 <p className="text-xs font-semibold" style={{ color: "var(--color-warning)" }}>Confirm Import</p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                   This will completely overwrite your current portfolio with <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>{importedTxs.length} transactions</span> from the backup file. This action cannot be undone.
@@ -300,7 +301,7 @@ export function SettingsPage() {
           {/* accordion header */}
           <button
             className="w-full flex items-center justify-between px-6 py-4 transition-colors"
-            style={{ borderBottom: diagnosticsOpen ? "1px solid #262626" : "1px solid transparent" }}
+            style={{ borderBottom: diagnosticsOpen ? "1px solid var(--border-primary)" : "1px solid transparent" }}
             onClick={() => setDiagnosticsOpen(o => !o)}
             onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -355,7 +356,7 @@ export function SettingsPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "var(--text-quaternary)" }}>Error Log (last 3)</p>
                 <div
                   className="rounded-lg p-3 space-y-1.5 overflow-y-auto"
-                  style={{ background: "var(--bg-base)", border: "1px solid #262626", maxHeight: "100px", minHeight: "52px" }}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-primary)", maxHeight: "100px", minHeight: "52px" }}
                 >
                   {!apiStats?.errors || apiStats.errors.length === 0 ? (
                     <p className="text-xs font-mono" style={{ color: "var(--border-secondary)" }}>No errors recorded.</p>
@@ -375,7 +376,7 @@ export function SettingsPage() {
                 <button
                   onClick={resetApiStats}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                  style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-muted)" }}
+                  style={{ background: "var(--bg-base)", border: "1px solid var(--border-primary)", color: "var(--text-muted)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-base)"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
                 >
@@ -386,7 +387,7 @@ export function SettingsPage() {
                   onClick={handleForceRefresh}
                   disabled={isRefreshing || !canRefresh}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: "var(--text-primary)", border: "1px solid #ffffff", color: "var(--bg-base)" }}
+                  style={{ background: "var(--text-primary)", border: "1px solid var(--text-primary)", color: "var(--bg-base)" }}
                   onMouseEnter={e => { if (!isRefreshing && canRefresh) { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; } }}
                   onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
                 >
@@ -402,10 +403,10 @@ export function SettingsPage() {
 
         {/* danger zone */}
         <div style={{ ...panel, border: "1px solid #2d1515" }}>
-          <div style={{ ...panelHeader, borderBottom: "1px solid #2d1515", background: "rgba(220,38,38,0.04)" }}>
+          <div style={{ ...panelHeader, borderBottom: "1px solid #2d1515", background: "var(--color-danger-bg)" }}>
             <div className="flex items-center gap-2.5">
-              <TriangleAlert size={15} style={{ color: "#ef4444" }} />
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#ef4444" }}>Danger Zone</span>
+              <TriangleAlert size={15} style={{ color: "var(--color-danger)" }} />
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--color-danger)" }}>Danger Zone</span>
             </div>
           </div>
           <div className="px-6 py-5 space-y-5">
@@ -418,9 +419,9 @@ export function SettingsPage() {
                 <button
                   onClick={handleResetClick}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95"
-                  style={{ background: "rgba(220,38,38,0.08)", color: "#ef4444", border: "1px solid rgba(220,38,38,0.2)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(220,38,38,0.15)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(220,38,38,0.08)"; }}
+                  style={{ background: "var(--color-danger-bg)", color: "var(--color-danger)", border: "1px solid var(--color-danger-border)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--color-danger-bg)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--color-danger-bg)"; }}
                 >
                   <Trash2 size={14} /> Reset
                 </button>
@@ -428,10 +429,10 @@ export function SettingsPage() {
             </div>
 
             {resetStep === "confirm-text" && (
-              <div className="p-4 rounded-lg space-y-4" style={{ background: "#1a1400", border: "1px solid rgba(234,179,8,0.2)" }}>
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "var(--color-warning-bg)", border: "1px solid var(--color-warning-border)" }}>
                 <p className="text-xs font-semibold" style={{ color: "var(--color-warning)" }}>⚠ Warning: Destructive Action</p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  Type <code className="px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: "var(--bg-base)", color: "var(--color-warning)" }}>CONFIRM</code> to continue.
+                  Type <code className="px-1.5 py-0.5 rounded font-mono font-bold" style={{ background: "var(--bg-panel)", color: "var(--color-warning)" }}>CONFIRM</code> to continue.
                 </p>
                 <div className="flex gap-2">
                   <input
@@ -442,13 +443,15 @@ export function SettingsPage() {
                     placeholder='Type "CONFIRM"'
                     autoFocus
                     className="flex-1 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none"
-                    style={{ background: "var(--bg-base)", border: "1px solid #262626", color: "var(--text-primary)" }}
+                    style={{ background: "var(--bg-base)", border: "1px solid var(--border-primary)", color: "var(--text-primary)" }}
                   />
                   <button
                     onClick={handleConfirmText}
                     disabled={confirmInput !== "CONFIRM"}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-30"
-                    style={{ background: "var(--color-warning)", color: "var(--bg-base)" }}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer disabled:opacity-30 shadow-sm"
+                    style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", border: "1px solid var(--btn-primary-border)" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "var(--btn-primary-hover)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "var(--btn-primary-bg)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
                   >
                     OK
                   </button>
@@ -466,19 +469,19 @@ export function SettingsPage() {
             )}
 
             {resetStep === "final-warning" && (
-              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}>
-                <p className="text-xs font-semibold" style={{ color: "#ef4444" }}>Are you absolutely sure?</p>
+              <div className="p-4 rounded-lg space-y-4" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid var(--color-danger-border)" }}>
+                <p className="text-xs font-semibold" style={{ color: "var(--color-danger)" }}>Are you absolutely sure?</p>
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  This is your <span style={{ color: "#ef4444", fontWeight: 600 }}>last chance</span> to cancel. All data will be erased permanently.
+                  This is your <span style={{ color: "var(--color-danger)", fontWeight: 600 }}>last chance</span> to cancel. All data will be erased permanently.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleFinalConfirm}
                     disabled={isResetting}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer disabled:opacity-50 active:scale-95"
-                    style={{ background: "#dc2626" }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "#b91c1c")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "#dc2626")}
+                    style={{ background: "var(--color-danger)" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--color-danger)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "var(--color-danger)")}
                   >
                     <Trash2 size={14} />
                     {isResetting ? "Resetting…" : "Yes, erase everything"}

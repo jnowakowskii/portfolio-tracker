@@ -17,14 +17,14 @@ const tableHeaderStyle: React.CSSProperties = {
   textTransform: "uppercase",
   letterSpacing: "0.05em",
   color: "var(--text-tertiary)",
-  borderBottom: "1px solid #262626",
+  borderBottom: "1px solid var(--border-primary)",
 };
 
 const tableCellStyle: React.CSSProperties = {
   padding: "14px 16px",
   fontSize: "14px",
   color: "var(--text-secondary)",
-  borderBottom: "1px solid #1f1f1f",
+  borderBottom: "1px solid var(--border-primary)",
 };
 
 export function HistoryPage({ onEdit }: HistoryPageProps) {
@@ -61,9 +61,10 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
         <div
           style={{
             background: "var(--bg-panel)",
-            border: "1px solid #262626",
+            border: "1px solid var(--border-primary)",
             borderRadius: "12px",
             overflow: "hidden",
+            boxShadow: "var(--card-shadow)",
           }}
         >
           {transactions.length === 0 ? (
@@ -95,7 +96,7 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                     const sideBorder = isBuy ? "rgba(16,185,129,0.25)" : "rgba(244,63,94,0.2)";
 
                     return (
-                      <tr key={tx.id} className="transition-colors hover:bg-[#1c1c1c]">
+                      <tr key={tx.id} className="transition-colors hover:bg-[var(--bg-hover)]">
                         <td style={tableCellStyle}>{dateStr}</td>
                         <td style={{ ...tableCellStyle, fontWeight: 600 }}>{tx.symbol}</td>
                         <td style={tableCellStyle}>
@@ -138,13 +139,13 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                             <button
                               onClick={() => handleDeleteClick(tx.id)}
                               className="p-1.5 rounded transition-colors"
-                              style={{ color: "#ef4444" }}
+                              style={{ color: "var(--color-danger)" }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.color = "#f87171";
                                 e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.color = "#ef4444";
+                                e.currentTarget.style.color = "var(--color-danger)";
                                 e.currentTarget.style.background = "transparent";
                               }}
                               title="Delete"
@@ -170,9 +171,9 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
         >
           <div
             className="w-full max-w-sm rounded-xl overflow-hidden"
-            style={{ background: "var(--bg-panel)", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+            style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
           >
-            <div className="px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
+            <div className="px-6 py-5" style={{ borderBottom: "1px solid var(--border-primary)" }}>
               <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Delete Transaction</h2>
             </div>
             <div className="p-6 space-y-5">
@@ -183,7 +184,7 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                 <button
                   onClick={() => setDeleteTargetId(null)}
                   className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-                  style={{ background: "transparent", border: "1px solid #262626", color: "var(--text-muted)" }}
+                  style={{ background: "transparent", border: "1px solid var(--border-primary)", color: "var(--text-muted)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
                 >
@@ -192,9 +193,9 @@ export function HistoryPage({ onEdit }: HistoryPageProps) {
                 <button
                   onClick={confirmDelete}
                   className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
-                  style={{ background: "#dc2626", color: "var(--text-primary)", border: "1px solid #dc2626" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#b91c1c"; e.currentTarget.style.borderColor = "#b91c1c"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.borderColor = "#dc2626"; }}
+                  style={{ background: "var(--color-danger)", color: "var(--text-primary)", border: "1px solid var(--color-danger)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--color-danger)"; e.currentTarget.style.borderColor = "var(--color-danger)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--color-danger)"; e.currentTarget.style.borderColor = "var(--color-danger)"; }}
                 >
                   Delete
                 </button>

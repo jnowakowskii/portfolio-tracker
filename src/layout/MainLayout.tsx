@@ -26,7 +26,8 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
       {/* unified header */}
       <header
         data-tauri-drag-region
-        className="relative h-16 flex items-center justify-between px-6 bg-[#171717] border-b border-[#262626] w-full shrink-0 select-none z-50"
+        className="relative h-16 flex items-center justify-between px-6 border-b border-[var(--border-primary)] w-full shrink-0 select-none z-50"
+        style={{ background: "var(--bg-nav)" }}
       >
         {/* logo section */}
         <div className="flex items-center gap-3">
@@ -59,7 +60,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           <button
             onClick={togglePrivacyMode}
             className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 active:scale-95 z-50"
-            style={{ background: isPrivacyModeEnabled ? "var(--color-success-bg)" : "transparent", color: isPrivacyModeEnabled ? "var(--color-success)" : "var(--text-muted)", border: isPrivacyModeEnabled ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid transparent" }}
+            style={{ background: isPrivacyModeEnabled ? "var(--color-success-bg)" : "transparent", color: isPrivacyModeEnabled ? "var(--color-success)" : "var(--text-muted)", border: isPrivacyModeEnabled ? "1px solid var(--color-success-border)" : "1px solid transparent" }}
             onMouseEnter={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "var(--border-primary)"; } }}
             onMouseLeave={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "transparent"; } }}
             title="Toggle Privacy Mode"
@@ -70,10 +71,10 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           {/* add transaction button */}
           <button
             onClick={onAddTransactionClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 group z-50"
-            style={{ background: "var(--text-primary)", color: "var(--bg-base)", border: "1px solid #ffffff" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 group z-50 shadow-sm"
+            style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", border: "1px solid var(--btn-primary-border)" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--btn-primary-hover)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--btn-primary-bg)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
           >
             <Plus size={16} className="transition-transform group-hover:rotate-90" />
             Add Transaction
@@ -93,7 +94,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           </div>
 
           {/* window controls */}
-          <div className="flex items-center gap-0.5 pl-4 z-50" style={{ borderLeft: "1px solid #262626" }}>
+          <div className="flex items-center gap-0.5 pl-4 z-50" style={{ borderLeft: "1px solid var(--border-primary)" }}>
             <button
               onClick={() => appWindow.minimize().catch(e => alert("Minimize error: " + e))}
               className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
@@ -108,7 +109,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
               onClick={() => appWindow.close().catch(e => alert("Close error: " + e))}
               className="w-8 h-8 flex items-center justify-center rounded-md transition-colors focus:outline-none cursor-pointer"
               style={{ color: "var(--text-quaternary)" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; e.currentTarget.style.color = "var(--text-primary)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--color-danger)"; e.currentTarget.style.color = "var(--text-primary)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-quaternary)"; }}
               title="Close"
             >

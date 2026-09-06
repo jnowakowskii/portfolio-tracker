@@ -93,23 +93,23 @@ export function DashboardPage() {
         <div className="lg:col-span-7 xl:col-span-8">
           <div
             className="rounded-xl flex flex-col h-[650px]"
-            style={{ background: "var(--bg-panel)", border: "1px solid #262626" }}
+            style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}
           >
             <div
               className="flex items-center justify-between px-6 py-4 shrink-0"
-              style={{ borderBottom: "1px solid #262626" }}
+              style={{ borderBottom: "1px solid var(--border-primary)" }}
             >
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
                 Portfolio Value Over Time
               </span>
-              <div className="flex bg-[#262626] rounded-lg p-1">
+              <div className="flex bg-[var(--segmented-bg)] rounded-lg p-1">
                 {(['3M', '6M', 'YTD', '1Y', '5Y'] as const).map(range => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${timeRange === range
-                      ? 'bg-[#404040] text-white shadow'
-                      : 'text-[#a3a3a3] hover:text-white hover:bg-[#333333]'
+                      ? 'bg-[var(--segmented-active)] text-[var(--segmented-text)] shadow'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover-darker)]'
                       }`}
                   >
                     {range}
@@ -130,7 +130,7 @@ export function DashboardPage() {
                     <XAxis
                       dataKey="date"
                       stroke="var(--text-tertiary)"
-                      tick={{ fill: '#737373', fontSize: 13 }}
+                      tick={{ fill: 'var(--text-tertiary)', fontSize: 13 }}
                       tickLine={false}
                       axisLine={false}
                       minTickGap={30}
@@ -139,15 +139,15 @@ export function DashboardPage() {
                       domain={['auto', 'auto']}
                       tickFormatter={(value) => yAxisFormatter(value, baseSymbol)}
                       stroke="var(--text-tertiary)"
-                      tick={{ fill: '#737373', fontSize: 13 }}
+                      tick={{ fill: 'var(--text-tertiary)', fontSize: 13 }}
                       tickLine={false}
                       axisLine={false}
                       width={85}
                     />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#171717', borderColor: '#262626', color: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
+                      contentStyle={{ backgroundColor: 'var(--bg-panel)', borderColor: 'var(--border-primary)', color: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)' }}
                       itemStyle={{ color: CHART_COLOR, fontWeight: 600 }}
-                      labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
+                      labelStyle={{ color: 'var(--text-muted)', marginBottom: '4px' }}
                       formatter={(value: any) => [isPrivacyModeEnabled ? mask : `${formatCurrency(Number(value), baseSymbol)}`, 'Value']}
                     />
                     <Area
@@ -176,12 +176,12 @@ export function DashboardPage() {
           {/* transactions panel */}
           <div
             className="rounded-xl flex flex-col overflow-hidden h-[650px]"
-            style={{ background: "var(--bg-panel)", border: "1px solid #262626" }}
+            style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}
           >
             {/* panel header */}
             <div
               className="flex items-center justify-between px-6 py-4 shrink-0"
-              style={{ borderBottom: "1px solid #262626" }}
+              style={{ borderBottom: "1px solid var(--border-primary)" }}
             >
               <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>
                 Recent Transactions
@@ -216,7 +216,7 @@ export function DashboardPage() {
                       <div
                         key={tx.id}
                         className="flex items-center justify-between px-6 py-5 transition-colors shrink-0"
-                        style={{ borderBottom: "1px solid #1f1f1f" }}
+                        style={{ borderBottom: "1px solid var(--border-primary)" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "var(--bg-hover)")}
                         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                       >

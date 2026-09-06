@@ -13,7 +13,7 @@ interface AddTransactionModalProps {
 const inputBase: React.CSSProperties = {
   width: "100%",
   background: "var(--bg-base)",
-  border: "1px solid #262626",
+  border: "1px solid var(--border-primary)",
   borderRadius: "8px",
   padding: "10px 12px 10px 36px",
   color: "var(--text-primary)",
@@ -23,7 +23,7 @@ const inputBase: React.CSSProperties = {
 };
 
 const inputFocus: React.CSSProperties = {
-  border: "1px solid #525252",
+  border: "1px solid var(--text-quaternary)",
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -85,10 +85,10 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.border = "1px solid #525252";
+    e.currentTarget.style.border = "1px solid var(--text-quaternary)";
   };
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.border = "1px solid #262626";
+    e.currentTarget.style.border = "1px solid var(--border-primary)";
   };
 
   const today = new Date();
@@ -113,27 +113,27 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
           className="absolute z-50 mt-2 p-4 rounded-xl shadow-2xl"
           style={{
             background: "var(--bg-panel)",
-            border: "1px solid #262626",
+            border: "1px solid var(--border-primary)",
             width: "280px",
             left: "0",
             top: "100%"
           }}
         >
           <div className="flex justify-between items-center mb-4">
-            <button onClick={handlePrevMonth} className="p-1 rounded-md hover:bg-[#262626] text-[#a3a3a3] hover:text-white transition-colors">
+            <button onClick={handlePrevMonth} className="p-1 rounded-md hover:bg-[var(--border-primary)] text-[var(--text-muted)] hover:text-white transition-colors">
               <ChevronLeft size={16} />
             </button>
             <div className="text-sm font-semibold text-white">
               {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
             </div>
-            <button onClick={handleNextMonth} className="p-1 rounded-md hover:bg-[#262626] text-[#a3a3a3] hover:text-white transition-colors">
+            <button onClick={handleNextMonth} className="p-1 rounded-md hover:bg-[var(--border-primary)] text-[var(--text-muted)] hover:text-white transition-colors">
               <ChevronRight size={16} />
             </button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-2">
             {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-              <div key={d} className="text-center text-xs font-semibold text-[#525252]">
+              <div key={d} className="text-center text-xs font-semibold text-[var(--text-quaternary)]">
                 {d}
               </div>
             ))}
@@ -154,8 +154,8 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
                   className={`w-8 h-8 flex items-center justify-center rounded-md text-sm transition-colors ${isSelected
                     ? 'bg-white text-black font-bold'
                     : isToday
-                      ? 'border border-[#525252] text-white font-medium'
-                      : 'text-[#a3a3a3] hover:bg-[#262626] hover:text-white'
+                      ? 'border border-[var(--text-quaternary)] text-white font-medium'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--border-primary)] hover:text-white'
                     }`}
                 >
                   {day}
@@ -371,7 +371,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
     Object.assign(e.currentTarget.style, inputFocus);
   };
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    e.currentTarget.style.border = "1px solid #262626";
+    e.currentTarget.style.border = "1px solid var(--border-primary)";
   };
 
   return (
@@ -380,11 +380,11 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
       style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
     >
       <div
-        className="w-full max-w-md rounded-xl"
-        style={{ background: "var(--bg-panel)", border: "1px solid #262626", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+        className="w-full max-w-md rounded-xl shadow-2xl"
+        style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--modal-shadow)" }}
       >
         {/* header section */}
-        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #262626" }}>
+        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid var(--border-primary)" }}>
           <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
             {editData ? "Edit Transaction" : "Add Transaction"}
           </h2>
@@ -420,7 +420,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   if (searchResults.length > 0 || isSearching) setShowDropdown(true);
                 }}
                 onBlur={handleBlur}
-                className="placeholder:text-[#404040] uppercase"
+                className="placeholder:text-[var(--border-secondary)] uppercase"
                 required
                 autoComplete="off"
               />
@@ -429,7 +429,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   className="absolute z-50 mt-1 w-full rounded-lg shadow-2xl overflow-hidden flex flex-col"
                   style={{
                     background: "var(--bg-panel)",
-                    border: "1px solid #262626",
+                    border: "1px solid var(--border-primary)",
                     top: "100%",
                     left: 0,
                     maxHeight: "200px"
@@ -448,7 +448,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                             setShowDropdown(false);
                           }}
                           className="px-3 py-2 cursor-pointer transition-colors"
-                          style={{ borderBottom: i < searchResults.length - 1 ? "1px solid #262626" : "none" }}
+                          style={{ borderBottom: i < searchResults.length - 1 ? "1px solid var(--border-primary)" : "none" }}
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--border-primary)"}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                         >
@@ -512,7 +512,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                     ? s === "BUY"
                       ? { background: "rgba(16,185,129,0.12)", color: "var(--color-success)", border: "1px solid rgba(16,185,129,0.25)" }
                       : { background: "rgba(244,63,94,0.1)", color: "var(--color-danger)", border: "1px solid rgba(244,63,94,0.2)" }
-                    : { background: "var(--bg-base)", color: "var(--text-quaternary)", border: "1px solid #262626" }
+                    : { background: "var(--bg-base)", color: "var(--text-quaternary)", border: "1px solid var(--border-primary)" }
                   }
                 >
                   {s}
@@ -550,7 +550,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder="0.00" style={{ ...inputBase }}
                   onFocus={handleFocus} onBlur={handleBlur}
-                  className="placeholder:text-[#404040]" required
+                  className="placeholder:text-[var(--border-secondary)]" required
                 />
               </div>
             </Field>
@@ -564,7 +564,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0.00" style={{ ...inputBase }}
                   onFocus={handleFocus} onBlur={handleBlur}
-                  className="placeholder:text-[#404040]" required
+                  className="placeholder:text-[var(--border-secondary)]" required
                 />
               </div>
             </Field>
@@ -581,7 +581,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
               type="button"
               onClick={onClose}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-              style={{ background: "transparent", border: "1px solid #262626", color: "var(--text-muted)" }}
+              style={{ background: "transparent", border: "1px solid var(--border-primary)", color: "var(--text-muted)" }}
               onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
             >
@@ -589,10 +589,10 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
-              style={{ background: "var(--text-primary)", color: "var(--bg-base)", border: "1px solid #ffffff" }}
-              onMouseEnter={e => { e.currentTarget.style.background = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--text-secondary)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--text-primary)"; }}
+              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98] shadow-sm"
+              style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", border: "1px solid var(--btn-primary-border)" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--btn-primary-hover)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--btn-primary-bg)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; }}
             >
               {editData ? "Save Changes" : "Save Transaction"}
             </button>

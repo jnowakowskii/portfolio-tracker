@@ -20,16 +20,17 @@ const COLORS = [
 
 const panel: React.CSSProperties = {
   background: "var(--bg-panel)",
-  border: "1px solid #262626",
+  border: "1px solid var(--border-primary)",
   borderRadius: "12px",
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
+  boxShadow: "var(--card-shadow)",
 };
 
 const panelHeader: React.CSSProperties = {
   padding: "14px 24px",
-  borderBottom: "1px solid #262626",
+  borderBottom: "1px solid var(--border-primary)",
 };
 
 export function AllocationPage() {
@@ -72,7 +73,7 @@ export function AllocationPage() {
             <div className="flex flex-col items-end">
               <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>Total Value</span>
               <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "var(--text-primary)" }}>
-                {isPrivacyModeEnabled ? mask : "0.00"} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+                {isPrivacyModeEnabled ? mask : "0.00"} <span className="text-xl text-[var(--text-muted)] font-sans ml-1">{baseSymbol}</span>
               </span>
             </div>
           </div>
@@ -145,7 +146,7 @@ export function AllocationPage() {
           <div className="flex flex-col items-end">
             <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>Total Value</span>
             <span className="text-2xl font-semibold font-mono tracking-tight" style={{ color: "var(--text-primary)" }}>
-              {isPrivacyModeEnabled ? mask : totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[#a3a3a3] font-sans ml-1">{baseSymbol}</span>
+              {isPrivacyModeEnabled ? mask : totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-xl text-[var(--text-muted)] font-sans ml-1">{baseSymbol}</span>
             </span>
           </div>
         </div>
@@ -189,7 +190,7 @@ export function AllocationPage() {
             </span>
           </div>
           <div className="flex flex-col">
-            <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-[#262626] text-xs font-medium text-[#737373] uppercase tracking-wider">
+            <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-[var(--border-primary)] text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
               <div className="col-span-4">Name / ticker</div>
               <div className="col-span-3 text-right">Current Price / Average Cost</div>
               <div className="col-span-3 text-right">Market Value</div>
@@ -201,21 +202,21 @@ export function AllocationPage() {
                 const color = COLORS[index % COLORS.length];
 
                 return (
-                  <div key={item.symbol} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#262626] last:border-0 items-center hover:bg-[#1f1f1f] transition-colors">
+                  <div key={item.symbol} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-[var(--border-primary)] last:border-0 items-center hover:bg-[var(--border-primary)] transition-colors">
                     <div className="col-span-4 flex flex-col overflow-hidden">
-                      <span className="text-sm font-medium text-[#e5e5e5] truncate" title={item.stockName}>{item.stockName}</span>
-                      <span className="text-xs text-[#737373] mt-0.5 truncate">{item.symbol}</span>
+                      <span className="text-sm font-medium text-[var(--text-secondary)] truncate" title={item.stockName}>{item.stockName}</span>
+                      <span className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">{item.symbol}</span>
                     </div>
                     <div className="col-span-3 flex flex-col items-end overflow-hidden">
-                      <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.price} ${item.priceCurrency}`}>
+                      <span className="text-sm font-mono text-[var(--text-secondary)] truncate w-full text-right" title={`${item.price} ${item.priceCurrency}`}>
                         {isPrivacyModeEnabled ? mask : item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.priceCurrency}
                       </span>
-                      <span className="text-xs font-mono text-[#737373] mt-0.5 truncate w-full text-right" title={`Avg: ${item.avgCost} ${item.costCurrency}`}>
+                      <span className="text-xs font-mono text-[var(--text-tertiary)] mt-0.5 truncate w-full text-right" title={`Avg: ${item.avgCost} ${item.costCurrency}`}>
                         Avg Cost: {isPrivacyModeEnabled ? mask : item.avgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.costCurrency}
                       </span>
                     </div>
                     <div className="col-span-3 flex flex-col items-end justify-center overflow-hidden">
-                      <span className="text-sm font-mono text-[#e5e5e5] truncate w-full text-right" title={`${item.value} ${baseCurrency}`}>
+                      <span className="text-sm font-mono text-[var(--text-secondary)] truncate w-full text-right" title={`${item.value} ${baseCurrency}`}>
                         {isPrivacyModeEnabled ? mask : item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {baseSymbol}
                       </span>
                     </div>
@@ -223,7 +224,7 @@ export function AllocationPage() {
                       <span className="text-sm font-mono font-medium text-right mb-1.5" style={{ color }}>
                         {percent}%
                       </span>
-                      <div className="w-28 h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                      <div className="w-28 h-1.5 bg-[var(--border-primary)] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${percent}%`, backgroundColor: color }}

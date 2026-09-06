@@ -18,7 +18,7 @@ export function SummaryCard({ title, value, change, isPositive, icon, changeIcon
   return (
     <div
       className="relative p-6 rounded-xl transition-colors duration-200"
-      style={{ background: "var(--bg-panel)", border: "1px solid #262626" }}
+      style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}
       onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-secondary)")}
       onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border-primary)")}
     >
