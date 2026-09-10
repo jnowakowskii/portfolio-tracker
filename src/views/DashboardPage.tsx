@@ -58,23 +58,33 @@ export function DashboardPage() {
   const unrealizedPL = displayPortfolioValue - displayTotalCost;
   const unrealizedPLPercent = displayTotalCost > 0 ? (unrealizedPL / displayTotalCost) * 100 : 0;
 
-  const weightedDailyChange = (() => {
-    if (!holdings.length || !quotes.length) return 0;
+  const { weightedDailyChange, dailyChangeValue } = (() => {
+    if (!holdings.length || !quotes.length) return { weightedDailyChange: 0, dailyChangeValue: 0 };
     const priceMap = new Map(quotes.map(q => [q.symbol, q]));
-    let totalW = 0, weightedSum = 0;
+    let totalW = 0, weightedSum = 0, totalChangeValue = 0;
     for (const h of holdings) {
       const q = priceMap.get(h.symbol);
       if (q) {
-        const v = h.quantity * q.price * (fxRates[q.currency] ?? 1.0);
+        const rate = fxRates[q.currency] ?? 1.0;
+        const v = h.quantity * q.price * rate;
         weightedSum += q.change_percent * v;
         totalW += v;
+
+        const oldPrice = q.price / (1 + q.change_percent / 100);
+        const changeValue = h.quantity * (q.price - oldPrice) * rate;
+        totalChangeValue += changeValue;
       }
     }
-    return totalW > 0 ? weightedSum / totalW : 0;
+    return {
+      weightedDailyChange: totalW > 0 ? weightedSum / totalW : 0,
+      dailyChangeValue: totalChangeValue
+    };
   })();
 
+  const absChangeValue = Math.abs(dailyChangeValue / baseRate);
+  const displayChangeVal = formatCurrency(absChangeValue, baseSymbol);
+  const displayChangeStr = `${displayChangeVal} ${weightedDailyChange >= 0 ? "+" : ""}${weightedDailyChange.toFixed(2)}%`;
   const displayValue = formatCurrency(displayPortfolioValue, baseSymbol);
-  const displayChange = `${weightedDailyChange >= 0 ? "+" : ""}${weightedDailyChange.toFixed(2)}% today`;
   const displayPL = `${unrealizedPL >= 0 ? "+" : ""}${formatCurrency(unrealizedPL, baseSymbol)}`;
   const displayPLPct = `${unrealizedPLPercent >= 0 ? "+" : ""}${unrealizedPLPercent.toFixed(1)}%`;
 
@@ -83,7 +93,7 @@ export function DashboardPage() {
       {/* summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <SummaryCard title={`Total Value (${baseCurrency})`} value={displayValue}
-          change={displayChange} isPositive={weightedDailyChange >= 0} icon={<Wallet size={18} />} />
+          changePrefix="Daily P/L " change={displayChangeStr} isPositive={weightedDailyChange >= 0} icon={<Wallet size={18} />} />
         <SummaryCard title={`Unrealized P/L (${baseCurrency})`} value={displayPL}
           change={displayPLPct} isPositive={unrealizedPL >= 0} icon={<PieChart size={18} />} />
       </div>

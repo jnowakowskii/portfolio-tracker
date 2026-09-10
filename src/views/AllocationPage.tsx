@@ -129,7 +129,7 @@ export function AllocationPage() {
               <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: entry.color, display: "inline-block" }} />
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{entry.value}</span>
-                <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>{percent}%</span>
+                <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{percent}%</span>
               </div>
             </li>
           );
