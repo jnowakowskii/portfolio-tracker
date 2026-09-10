@@ -4,15 +4,13 @@ use std::sync::Mutex;
 use tauri::State;
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-// ── yahoo finance auth state ───────────────────────────────────────────
-
+// yahoo finance auth state
 struct YahooAuth {
     crumb: Mutex<Option<String>>,
     cookie: Mutex<Option<String>>,
 }
 
-// ── yahoo finance response types ───────────────────────────────────────
-
+// yahoo finance response types
 #[derive(Debug, Deserialize)]
 struct YahooChartResponse {
     chart: YahooChartResult,
@@ -79,8 +77,7 @@ struct YahooQuote {
     trailing_annual_dividend_rate: Option<f64>,
 }
 
-// ── public return types ────────────────────────────────────────────────
-
+// public return types
 #[derive(Debug, Serialize, Clone)]
 pub struct DividendEvent {
     pub symbol: String,
@@ -118,16 +115,15 @@ struct YahooSearchResponse {
     quotes: Vec<SymbolSearchResult>,
 }
 
-/// combined response for a single-batch boot/refresh call.
-/// contains market quotes for user tickers and fx rates in one yahoo request.
+/// combined response for a single batch boot/refresh call.
+/// contains market quotes for user tickers and fx rates in one yahoo request
 #[derive(Debug, Serialize, Clone)]
 pub struct CombinedData {
     pub market_quotes: Vec<MarketQuote>,
     pub fx_rates: HashMap<String, f64>,
 }
 
-// ── cookie + crumb helpers ─────────────────────────────────────────────
-
+// cookie + crumb helpers
 async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
     let client = reqwest::Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
@@ -135,7 +131,7 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    // step 1: hit the consent/finance page to get cookies
+    // step 1 hit the consent/finance page to get cookies
     let resp = client
         .get("https://fc.yahoo.com/")
         .send()
@@ -154,7 +150,7 @@ async fn fetch_crumb_and_cookie() -> Result<(String, String), String> {
 
     let cookie_header = cookies.join("; ");
 
-    // step 2: fetch the crumb using the cookies
+    // step 2 fetch the crumb using the cookies
     let crumb_resp = client
         .get("https://query2.finance.yahoo.com/v1/test/getcrumb")
         .header("cookie", &cookie_header)
@@ -197,7 +193,7 @@ async fn ensure_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), St
     }
 }
 
-/// Refresh auth credentials
+/// refresh auth credentials
 async fn refresh_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), String> {
     let (new_crumb, new_cookie) = fetch_crumb_and_cookie().await?;
     *auth.crumb.lock().unwrap() = Some(new_crumb.clone());
@@ -205,8 +201,7 @@ async fn refresh_auth(auth: &State<'_, YahooAuth>) -> Result<(String, String), S
     Ok((new_crumb, new_cookie))
 }
 
-// ── tauri commands ─────────────────────────────────────────────────────
-
+// tauri cmd
 #[tauri::command]
 async fn get_market_data(
     symbols: Vec<String>,
@@ -228,8 +223,8 @@ async fn get_market_data(
     }
 }
 
-/// Single-batch command: fetches user ticker symbols AND FX pairs in one HTTP
-/// request, returns them pre-split so the frontend needs exactly one Yahoo call.
+/// single-batch command: fetches user ticker symbols and forex pairs in one http request
+/// returns them pre-split so the frontend needs exactly one yahoo call
 #[tauri::command]
 async fn get_combined_data(
     symbols: Vec<String>,
@@ -327,7 +322,10 @@ async fn fetch_quotes(
             change_percent: q.regular_market_change_percent.unwrap_or(0.0),
             currency: q.currency.unwrap_or_else(|| "USD".to_string()),
             name: q.short_name,
-            dividend_rate: q.dividend_rate.or(q.trailing_annual_dividend_rate).or(Some(0.0)),
+            dividend_rate: q
+                .dividend_rate
+                .or(q.trailing_annual_dividend_rate)
+                .or(Some(0.0)),
         })
         .collect();
 
@@ -492,7 +490,9 @@ async fn fetch_historical_prices(
     let mut prices = Vec::new();
     if let Some(results) = data.chart.result {
         if let Some(first_result) = results.first() {
-            if let (Some(timestamps), Some(indicators)) = (&first_result.timestamp, &first_result.indicators) {
+            if let (Some(timestamps), Some(indicators)) =
+                (&first_result.timestamp, &first_result.indicators)
+            {
                 if let Some(quotes) = &indicators.quote {
                     if let Some(first_quote) = quotes.first() {
                         if let Some(closes) = &first_quote.close {
@@ -548,14 +548,15 @@ async fn search_symbols(query: String) -> Result<Vec<SymbolSearchResult>, String
     Ok(data.quotes)
 }
 
-/// Extract FX rates (relative to base_currency) from a slice of quotes for FX pair symbols.
+/// extract FX rates relative to base_currency from a slice of quotes for FX pair symbols
 fn parse_fx_rates(quotes: Vec<MarketQuote>, base_currency: &str) -> HashMap<String, f64> {
     let mut rates: HashMap<String, f64> = HashMap::new();
     rates.insert(base_currency.to_string(), 1.0);
     let suffix = format!("{}={}", base_currency, "X");
-    
+
     for q in quotes {
-        // Symbol is like "USDEUR=X" → currency code is "USD"
+        // symbol is like "USDEUR=X"
+        // currency code is "USD"
         let currency = q.symbol.replace(&suffix, "");
         if !currency.is_empty() && q.price > 0.0 {
             rates.insert(currency, q.price);
@@ -564,8 +565,7 @@ fn parse_fx_rates(quotes: Vec<MarketQuote>, base_currency: &str) -> HashMap<Stri
     rates
 }
 
-// ── App entry ──────────────────────────────────────────────────────────
-
+// app entry
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let migrations = vec![
@@ -604,7 +604,13 @@ pub fn run() {
                 .add_migrations("sqlite:portfolio.db", migrations)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![get_market_data, get_combined_data, search_symbols, get_dividend_history, get_historical_prices])
+        .invoke_handler(tauri::generate_handler![
+            get_market_data,
+            get_combined_data,
+            search_symbols,
+            get_dividend_history,
+            get_historical_prices
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
