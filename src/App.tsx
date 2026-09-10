@@ -29,7 +29,7 @@ function App() {
     );
   }, []);
 
-  // Theme observer
+  // theme observer
   useEffect(() => {
     const unsub = usePortfolioStore.subscribe((state) => {
       document.documentElement.setAttribute("data-theme", state.theme);

@@ -68,7 +68,7 @@ export function calculateDividends(
   const nowMs = new Date().getTime();
   const oneYearAgoMs = nowMs - 365 * 24 * 60 * 60 * 1000;
 
-  // 1. chronological history: all-time earned & monthly chart
+  // 1. chronological history: all-time earned and monthly chart
   for (const event of dividendEvents) {
     const eventDateMs = event.date * 1000;
     const currency = currencyMap.get(event.symbol) || baseCurrency;
@@ -101,7 +101,7 @@ export function calculateDividends(
   for (const [symbol, currentQty] of currentHoldingsMap.entries()) {
     if (currentQty <= 0) continue;
 
-    // bulletproof lookup in case `quotes` is an array or a record
+    // lookup in case 'quotes' is an array or a record
     const quote = Array.isArray(quotes)
       ? quotes.find((q: any) => q.symbol === symbol)
       : quotes[symbol] || Object.values(quotes).find((q: any) => q.symbol === symbol);
@@ -127,7 +127,7 @@ export function calculateDividends(
       topPayers.push({
         symbol,
         name: quote?.name || symbol,
-        totalAmount: 0, // unused in ui, kept for interface compliance
+        totalAmount: 0, // unused in ui
         annualAmount: forwardBase,
         annualAmountNative: forwardNative,
         currency,

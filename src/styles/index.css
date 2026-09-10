@@ -21,7 +21,7 @@
   --segmented-bg: #262626;
   --segmented-active: #404040;
   --segmented-text: #ffffff;
-  
+
   --btn-primary-bg: #ffffff;
   --btn-primary-text: #0a0a0a;
   --btn-primary-hover: #e5e5e5;
@@ -65,7 +65,7 @@
   --segmented-bg: #f1f5f9;
   --segmented-active: #ffffff;
   --segmented-text: #0f172a;
-  
+
   --btn-primary-bg: #ffffff;
   --btn-primary-text: #0f172a;
   --btn-primary-hover: #f1f5f9;
@@ -113,7 +113,7 @@ html {
   box-shadow: none !important;
 }
 
-/* ensure the container targeted earlier doesnt get an outline */
+/* make srue that container doesnt get an outline */
 .allocation-chart,
 .allocation-chart:focus,
 .allocation-chart svg path:focus {

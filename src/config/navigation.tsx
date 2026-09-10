@@ -5,13 +5,10 @@ export interface NavSection {
   id: string;
   label: string;
   icon: ReactNode;
-  /** bottom alignment */
-  bottom?: boolean;
+  bottom?: boolean; // bottom alignment
 }
 
-/**
- * navigation tabs
- */
+// navigation tabs
 export const NAV_ITEMS: NavSection[] = [
   { id: "dashboard", label: "Dashboard", icon: <House size={20} /> },
   { id: "allocation", label: "Allocation", icon: <PieChart size={20} /> },

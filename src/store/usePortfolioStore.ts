@@ -59,12 +59,12 @@ interface PortfolioState {
   fxRates: FxRates;
   baseCurrency: SupportedCurrency;
   theme: "dark" | "light";
-  
+
   // calculated state
   portfolioValue: number;
   totalCost: number;
   portfolioHistory: ChartDataPoint[];
-  
+
   // dividend state
   dividendEvents: DividendEvent[];
   monthlyDividends: MonthlyDividend[];
@@ -96,14 +96,14 @@ export const usePortfolioStore = create<PortfolioState>()(
       holdings: [],
       quotes: [],
       fxRates: { PLN: 1.0 },
-      baseCurrency: "PLN", // default overwritten by persist
+      baseCurrency: "PLN", // default overwritten
       theme: "dark",
-      
+
       // initial calculated state
       portfolioValue: 0,
       totalCost: 0,
       portfolioHistory: [],
-      
+
       // initial dividend state
       dividendEvents: [],
       monthlyDividends: [],
@@ -203,7 +203,7 @@ export const usePortfolioStore = create<PortfolioState>()(
 
       fetchMarketData: async (overrideTxs?: Transaction[]) => {
         set({ isLoadingMarket: true });
-        
+
         try {
           const state = get();
           const txs = overrideTxs || state.transactions;
@@ -234,37 +234,37 @@ export const usePortfolioStore = create<PortfolioState>()(
           let rates: FxRates = state.fxRates;
           const t0 = Date.now();
           try {
-             const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
-             marketQuotes = data.market_quotes;
-             rates = data.fx_rates;
-             set({ 
-               quotes: marketQuotes, 
-               fxRates: rates,
-               apiStats: applyCallResult(get().apiStats, true, Date.now() - t0)
-             });
+            const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
+            marketQuotes = data.market_quotes;
+            rates = data.fx_rates;
+            set({
+              quotes: marketQuotes,
+              fxRates: rates,
+              apiStats: applyCallResult(get().apiStats, true, Date.now() - t0)
+            });
           } catch (error) {
-             const msg = `[Combined] ${String(error).slice(0, 120)}`;
-             set({ apiStats: applyCallResult(get().apiStats, false, Date.now() - t0, msg) });
-             console.error("Failed to fetch combined market data:", error);
+            const msg = `[Combined] ${String(error).slice(0, 120)}`;
+            set({ apiStats: applyCallResult(get().apiStats, false, Date.now() - t0, msg) });
+            console.error("Failed to fetch combined market data:", error);
           }
 
           // fetch dividend events
           let events: DividendEvent[] = state.dividendEvents;
           try {
-             events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
-             set({ dividendEvents: events });
+            events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
+            set({ dividendEvents: events });
           } catch (error) {
-             console.error("Failed to fetch dividend history:", error);
+            console.error("Failed to fetch dividend history:", error);
           }
 
           // fetch historical prices
           let historicalPrices: Record<string, HistoricalPrice[]> = {};
           try {
-             historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
-             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
-             set({ portfolioHistory: history });
+            historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
+            const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
+            set({ portfolioHistory: history });
           } catch (error) {
-             console.error("Failed to fetch historical prices:", error);
+            console.error("Failed to fetch historical prices:", error);
           }
 
           // run calculations

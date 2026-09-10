@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
 // types
-
 export interface MarketQuote {
   symbol: string;
   price: number;
@@ -32,15 +31,12 @@ export interface Transaction {
 
 export interface PortfolioHolding {
   symbol: string;
-  /** net quantity */
-  quantity: number;
-  /** total cost basis */
-  totalCost: number;
-  /** holding currency */
-  currency: string;
+  quantity: number; // net quantity
+  totalCost: number; // total cost basis
+  currency: string; // holding currency
 }
 
-/** fx rates relative to base currency */
+// fx rates relative to base currency
 export type FxRates = Record<string, number>;
 
 export const SUPPORTED_CURRENCIES = ["PLN", "USD", "EUR", "GBP"] as const;
@@ -53,7 +49,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: "£",
 };
 
-/** combined data result */
+// combined data result
 export interface CombinedData {
   market_quotes: MarketQuote[];
   fx_rates: FxRates;
@@ -61,15 +57,13 @@ export interface CombinedData {
 
 // api
 
-/** get market data */
+// get market data
 export async function getMarketDataRaw(symbols: string[]): Promise<MarketQuote[]> {
   if (symbols.length === 0) return [];
   return invoke<MarketQuote[]>("get_market_data", { symbols });
 }
 
-/**
- * combined api call to get quotes and fx rates
- */
+// combined api call to get quotes and forex rates
 export async function getCombinedDataRaw(symbols: string[], baseCurrency: string): Promise<CombinedData> {
   return invoke<CombinedData>("get_combined_data", { symbols, baseCurrency });
 }
@@ -82,9 +76,8 @@ export async function searchSymbols(query: string): Promise<SymbolSearchResult[]
 
 // helpers
 
-/**
- * aggregate transactions into net holdings per symbol
- */
+
+// transactions into net holdings per symbol
 export function aggregateHoldings(transactions: Transaction[]): PortfolioHolding[] {
   const map = new Map<string, PortfolioHolding>();
 
@@ -108,13 +101,11 @@ export function aggregateHoldings(transactions: Transaction[]): PortfolioHolding
     map.set(tx.symbol, existing);
   }
 
-  // return positions with shares still held
+  // return positions with shares still in portfoio
   return Array.from(map.values()).filter(h => h.quantity > 0);
 }
 
-/**
- * calculate total portfolio value
- */
+// calculate total portfolio value
 export function calculatePortfolioValue(
   holdings: PortfolioHolding[],
   quotes: MarketQuote[],
@@ -133,9 +124,8 @@ export function calculatePortfolioValue(
   }, 0);
 }
 
-/**
- * calculate total cost basis
- */
+
+// calculate total cost basis
 export function calculateTotalCost(
   holdings: PortfolioHolding[],
   fxRates: FxRates

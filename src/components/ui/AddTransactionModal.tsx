@@ -175,13 +175,11 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
 
   const ex = exchange.toLowerCase();
 
-  // united states
+  // usa
   if (ex.includes("nyse") || ex.includes("nasdaq") || ex.includes("otc") || ex.includes("nms") || ex.includes("nyq") || ex.includes("pnk") || ex.includes("oqx") || ex.includes("obc") || ex.includes("bzx") || ex.includes("cboe") || ex.includes("arcx") || ex.includes("bats") || ex.includes("iex") || ex.includes("phlx")) return "us";
 
-  // europe pan european
+  // europe
   if (ex.includes("dxe") || ex.includes("cboe europe") || (ex.includes("euronext") && !ex.includes("paris") && !ex.includes("amsterdam") && !ex.includes("brussels") && !ex.includes("lisbon"))) return "eu";
-
-  // europe national
   if (ex.includes("warsaw") || ex.includes("wse")) return "pl";
   if (ex.includes("frankfurt") || ex.includes("xetra") || ex.includes("ger") || ex.includes("fra") || ex.includes("stuttgart") || ex.includes("stu") || ex.includes("berlin") || ex.includes("munich") || ex.includes("dus") || ex.includes("hamburg") || ex.includes("hannover") || ex.includes("mun")) return "de";
   if (ex.includes("london") || ex.includes("lse") || ex.includes("iobe") || ex.includes("aquis")) return "gb";
@@ -212,7 +210,7 @@ function getExchangeFlag(exchange?: string, quoteType?: string): string {
   if (ex.includes("colombia") || ex.includes("bvc") || ex.includes("bogota")) return "co";
   if (ex.includes("lima") || ex.includes("bvl")) return "pe";
 
-  // asia pacific
+  // asia
   if (ex.includes("tokyo") || ex.includes("tse") || ex.includes("tyo") || ex.includes("ose") || ex.includes("fuk") || ex.includes("tok") || ex.includes("fka") || ex.includes("sap")) return "jp";
   if (ex.includes("hong kong") || ex.includes("hkse") || ex.includes("hkg")) return "hk";
   if (ex.includes("shanghai") || ex.includes("shenzhen") || ex.includes("shh") || ex.includes("shz") || ex.includes("sse") || ex.includes("szse")) return "cn";
@@ -383,7 +381,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
         className="w-full max-w-md rounded-xl shadow-2xl"
         style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--modal-shadow)" }}
       >
-        {/* header section */}
+        {/* header */}
         <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid var(--border-primary)" }}>
           <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
             {editData ? "Edit Transaction" : "Add Transaction"}
@@ -399,7 +397,7 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
           </button>
         </div>
 
-        {/* form section */}
+        {/* form */}
         <form onSubmit={handleSubmit} className="p-6 pb-40 space-y-5 max-h-[85vh] overflow-y-auto">
 
           {/* symbol field */}

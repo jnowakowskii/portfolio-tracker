@@ -23,7 +23,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
   return (
     <div className="flex flex-col h-screen font-sans" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
 
-      {/* unified header */}
+      {/* header */}
       <header
         data-tauri-drag-region
         className="relative h-16 flex items-center justify-between px-6 border-b border-[var(--border-primary)] w-full shrink-0 select-none z-50"
