@@ -60,7 +60,7 @@ export function MainLayout({ children, activeTab, setActiveTab, onAddTransaction
           <button
             onClick={togglePrivacyMode}
             className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-150 active:scale-95 z-50"
-            style={{ background: isPrivacyModeEnabled ? "var(--color-success-bg)" : "transparent", color: isPrivacyModeEnabled ? "var(--color-success)" : "var(--text-muted)", border: isPrivacyModeEnabled ? "1px solid var(--color-success-border)" : "1px solid transparent" }}
+            style={isPrivacyModeEnabled ? { background: "var(--border-primary)", color: "var(--text-primary)", border: "1px solid var(--border-secondary)" } : { background: "transparent", color: "var(--text-muted)", border: "1px solid transparent" }}
             onMouseEnter={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.background = "var(--border-primary)"; } }}
             onMouseLeave={e => { if (!isPrivacyModeEnabled) { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.background = "transparent"; } }}
             title="Toggle Privacy Mode"
