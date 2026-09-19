@@ -1,16 +1,63 @@
-import { useState } from "react";
-import { Plus, Trash2, Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Search, Globe } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
+import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
 
 export function WatchlistPage() {
   const { watchlist, addToWatchlist, removeFromWatchlist } = usePortfolioStore();
   const [newSymbol, setNewSymbol] = useState("");
+  const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const selectedFromDropdownRef = useRef(false);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!newSymbol.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    if (selectedFromDropdownRef.current) {
+      selectedFromDropdownRef.current = false;
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      setShowDropdown(true);
+      try {
+        const results = await searchSymbols(newSymbol);
+        setSearchResults(results);
+      } catch (error) {
+        console.error("Failed to search symbols:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [newSymbol]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (newSymbol.trim()) {
       addToWatchlist(newSymbol.trim().toUpperCase());
       setNewSymbol("");
+      setSearchResults([]);
+      setShowDropdown(false);
     }
   };
 
@@ -33,35 +80,118 @@ export function WatchlistPage() {
         }}
       >
         <form onSubmit={handleAdd} className="flex gap-3 mb-6">
-          <div className="relative flex-1">
+          <div className="relative flex-1" ref={searchContainerRef}>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} style={{ color: "var(--text-tertiary)" }} />
             </div>
             <input
               type="text"
               value={newSymbol}
-              onChange={(e) => setNewSymbol(e.target.value)}
+              onChange={(e) => {
+                setNewSymbol(e.target.value.toUpperCase());
+                selectedFromDropdownRef.current = false;
+              }}
+              onFocus={() => {
+                if (searchResults.length > 0 || isSearching) setShowDropdown(true);
+              }}
               placeholder="Add symbol (e.g. AAPL, MSFT)"
-              className="block w-full pl-10 pr-3 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="block w-full pl-10 pr-3 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
               style={{
                 background: "var(--bg-primary)",
                 border: "1px solid var(--border-primary)",
                 color: "var(--text-primary)",
               }}
+              autoComplete="off"
             />
+            
+            {showDropdown && newSymbol.trim().length > 0 && (isSearching || searchResults.length > 0) && (
+              <div
+                className="absolute z-50 mt-1 w-full rounded-lg shadow-2xl overflow-hidden flex flex-col"
+                style={{
+                  background: "var(--bg-panel)",
+                  border: "1px solid var(--border-primary)",
+                  top: "100%",
+                  left: 0,
+                  maxHeight: "300px"
+                }}
+              >
+                {isSearching ? (
+                  <div className="p-3 text-sm font-medium" style={{ color: "var(--text-tertiary)", textAlign: "center" }}>Searching...</div>
+                ) : (
+                  <div className="overflow-y-auto">
+                    {searchResults.map((res, i) => (
+                      <div
+                        key={`${res.symbol}-${i}`}
+                        onClick={() => {
+                          setNewSymbol(res.symbol);
+                          selectedFromDropdownRef.current = true;
+                          setShowDropdown(false);
+                        }}
+                        className="px-3 py-2 cursor-pointer transition-colors"
+                        style={{ borderBottom: i < searchResults.length - 1 ? "1px solid var(--border-primary)" : "none" }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--border-primary)"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                      >
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="font-mono font-bold text-sm" style={{ color: "var(--text-primary)" }}>{res.symbol}</span>
+                          {res.exchange && (
+                            <span className="text-xs uppercase flex items-center" style={{ color: "var(--text-tertiary)" }}>
+                              {(() => {
+                                const flagCode = getExchangeFlag(res.exchange, res.quoteType);
+                                if (flagCode === "crypto") {
+                                  return <span className="mr-2 text-[11px] opacity-80">🪙</span>;
+                                }
+                                if (flagCode === "globe") {
+                                  return <Globe size={12} className="mr-2 opacity-80" />;
+                                }
+                                return (
+                                  <img
+                                    src={`https://flagcdn.com/w20/${flagCode}.png`}
+                                    width="16"
+                                    className="mr-2 opacity-90"
+                                    loading="lazy"
+                                    alt={flagCode}
+                                    style={{ height: "auto", borderRadius: "2px" }}
+                                  />
+                                );
+                              })()}
+                              {res.exchange}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center mt-1">
+                          {res.shortname && <div className="text-xs truncate mr-2" style={{ color: "var(--text-muted)" }}>{res.shortname}</div>}
+                          {res.quoteType && (
+                            <span
+                              className="ml-auto text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0"
+                              style={{ background: "var(--border-primary)", color: "var(--text-muted)" }}
+                            >
+                              {res.quoteType === "EQUITY" ? "STOCK" : res.quoteType === "CRYPTOCURRENCY" ? "CRYPTO" : res.quoteType}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
             type="submit"
             disabled={!newSymbol.trim()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 active:scale-95 disabled:active:scale-100 group shadow-sm"
             style={{
-              background: newSymbol.trim() ? "var(--text-primary)" : "var(--border-secondary)",
-              color: "var(--bg-primary)",
+              background: "var(--btn-primary-bg)",
+              color: "var(--btn-primary-text)",
+              border: "1px solid var(--btn-primary-border)",
               cursor: newSymbol.trim() ? "pointer" : "not-allowed",
-              opacity: newSymbol.trim() ? 1 : 0.7
+              opacity: newSymbol.trim() ? 1 : 0.5
             }}
+            onMouseEnter={e => { if (newSymbol.trim()) { e.currentTarget.style.background = "var(--btn-primary-hover)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; } }}
+            onMouseLeave={e => { if (newSymbol.trim()) { e.currentTarget.style.background = "var(--btn-primary-bg)"; e.currentTarget.style.borderColor = "var(--btn-primary-border)"; } }}
           >
-            <Plus size={18} />
+            <Plus size={16} className={newSymbol.trim() ? "transition-transform group-hover:rotate-90" : ""} />
             Add
           </button>
         </form>
