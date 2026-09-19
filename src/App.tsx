@@ -7,6 +7,7 @@ import { PlaceholderPage } from "./views/PlaceholderPage";
 import { SettingsPage } from "./views/SettingsPage";
 import { HistoryPage } from "./views/HistoryPage";
 import { DividendsPage } from "./views/DividendsPage";
+import { WatchlistPage } from "./views/WatchlistPage";
 import { NAV_ITEMS } from "./config/navigation";
 import { usePortfolioStore } from "./store/usePortfolioStore";
 import type { Transaction } from "./services/marketData";
@@ -61,6 +62,8 @@ function App() {
         );
       case "dividends":
         return <DividendsPage />;
+      case "watchlist":
+        return <WatchlistPage />;
       default: {
         const navItem = NAV_ITEMS.find(item => item.id === activeTab);
         return <PlaceholderPage title={navItem?.label ?? activeTab} />;
