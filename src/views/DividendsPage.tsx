@@ -155,7 +155,7 @@ export function DividendsPage() {
                     <span className="font-medium" style={{ color: "var(--text-primary)" }}>{payer.symbol}</span>
                     <span className="text-xs" style={{ color: "var(--text-muted)" }}>{payer.name}</span>
                     <span className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                      {payer.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {payer.dividendPerShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {payer.currency}
+                      {isPrivacyModeEnabled ? mask : payer.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {payer.dividendPerShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {payer.currency}
                     </span>
                   </div>
                   <div className="flex flex-col items-end">

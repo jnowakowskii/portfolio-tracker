@@ -505,7 +505,7 @@ export function SettingsPage() {
 
       <div className="w-full max-w-2xl pt-12 pb-2 text-center mt-auto">
         <p className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "var(--text-tertiary)" }}>
-          Callisto<br /><br />
+          Callisto // Portfolio Tracker<br /><br />
           © 2026 jakubnowakowski.com<br />
           Data via Yahoo Finance
         </p>

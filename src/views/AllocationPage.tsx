@@ -56,6 +56,7 @@ export function AllocationPage() {
         avgCost: h.quantity > 0 ? h.totalCost / h.quantity : 0,
         costCurrency: h.currency,
         value: valueBase,
+        quantity: h.quantity,
       };
     }).filter(d => d.value > 0).sort((a, b) => b.value - a.value);
 
@@ -215,9 +216,12 @@ export function AllocationPage() {
                         Avg Cost: {isPrivacyModeEnabled ? mask : item.avgCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.costCurrency}
                       </span>
                     </div>
-                    <div className="col-span-3 flex flex-col items-end justify-center overflow-hidden">
+                    <div className="col-span-3 flex flex-col items-end overflow-hidden">
                       <span className="text-sm font-mono text-[var(--text-secondary)] truncate w-full text-right" title={`${item.value} ${baseCurrency}`}>
                         {isPrivacyModeEnabled ? mask : item.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {baseSymbol}
+                      </span>
+                      <span className="text-xs font-mono text-[var(--text-tertiary)] mt-0.5 truncate w-full text-right" title={`${item.quantity} shares x ${item.price} ${item.priceCurrency}`}>
+                        {isPrivacyModeEnabled ? mask : item.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {isPrivacyModeEnabled ? mask : item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {item.priceCurrency}
                       </span>
                     </div>
                     <div className="col-span-2 flex flex-col items-end justify-center overflow-hidden">
