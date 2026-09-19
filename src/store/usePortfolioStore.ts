@@ -89,7 +89,7 @@ interface PortfolioState {
   fetchMarketData: (txs?: Transaction[]) => Promise<void>;
   resetApiStats: () => void;
   togglePrivacyMode: () => void;
-  addToWatchlist: (symbol: string) => void;
+  addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => void;
 }
 
@@ -133,12 +133,13 @@ export const usePortfolioStore = create<PortfolioState>()(
       setTheme: (theme) => set({ theme }),
       togglePrivacyMode: () => set((state) => ({ isPrivacyModeEnabled: !state.isPrivacyModeEnabled })),
       resetApiStats: () => set({ apiStats: initialApiStats }),
-      addToWatchlist: (symbol) => set((state) => {
+      addToWatchlist: async (symbol) => {
+        const state = get();
         if (!state.watchlist.includes(symbol)) {
-          return { watchlist: [...state.watchlist, symbol] };
+          set({ watchlist: [...state.watchlist, symbol] });
+          await get().fetchMarketData();
         }
-        return state;
-      }),
+      },
       removeFromWatchlist: (symbol) => set((state) => ({
         watchlist: state.watchlist.filter((s) => s !== symbol)
       })),
@@ -229,7 +230,9 @@ export const usePortfolioStore = create<PortfolioState>()(
           const currentHoldings = aggregateHoldings(txs);
           set({ holdings: currentHoldings });
 
-          if (currentHoldings.length === 0) {
+          const symbols = Array.from(new Set([...txs.map(t => t.symbol), ...state.watchlist]));
+
+          if (symbols.length === 0) {
             set({
               quotes: [],
               portfolioValue: 0,
@@ -243,8 +246,6 @@ export const usePortfolioStore = create<PortfolioState>()(
             });
             return;
           }
-
-          const symbols = Array.from(new Set(txs.map(t => t.symbol)));
 
           // fetch market quotes and fx rates
           let marketQuotes: MarketQuote[] = state.quotes;

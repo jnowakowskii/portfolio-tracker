@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Search, Globe } from "lucide-react";
+import { Plus, Trash2, Search, Globe, X } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
 import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
 
 export function WatchlistPage() {
-  const { watchlist, addToWatchlist, removeFromWatchlist } = usePortfolioStore();
+  const { watchlist, addToWatchlist, removeFromWatchlist, quotes } = usePortfolioStore();
   const [newSymbol, setNewSymbol] = useState("");
   const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  
+  const [selectedAsset, setSelectedAsset] = useState<SymbolSearchResult | null>(null);
+
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const selectedFromDropdownRef = useRef(false);
 
@@ -56,6 +57,7 @@ export function WatchlistPage() {
     if (newSymbol.trim()) {
       addToWatchlist(newSymbol.trim().toUpperCase());
       setNewSymbol("");
+      setSelectedAsset(null);
       setSearchResults([]);
       setShowDropdown(false);
     }
@@ -73,10 +75,10 @@ export function WatchlistPage() {
 
       <div
         className="rounded-xl flex flex-col p-6 shadow-sm"
-        style={{ 
-          background: "var(--bg-panel)", 
-          border: "1px solid var(--border-primary)", 
-          boxShadow: "var(--card-shadow)" 
+        style={{
+          background: "var(--bg-panel)",
+          border: "1px solid var(--border-primary)",
+          boxShadow: "var(--card-shadow)"
         }}
       >
         <form onSubmit={handleAdd} className="flex gap-3 mb-6">
@@ -84,27 +86,68 @@ export function WatchlistPage() {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={18} style={{ color: "var(--text-tertiary)" }} />
             </div>
-            <input
-              type="text"
-              value={newSymbol}
-              onChange={(e) => {
-                setNewSymbol(e.target.value.toUpperCase());
-                selectedFromDropdownRef.current = false;
-              }}
-              onFocus={() => {
-                if (searchResults.length > 0 || isSearching) setShowDropdown(true);
-              }}
-              placeholder="Add symbol (e.g. AAPL, MSFT)"
-              className="block w-full pl-10 pr-3 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
-              style={{
-                background: "var(--bg-primary)",
-                border: "1px solid var(--border-primary)",
-                color: "var(--text-primary)",
-              }}
-              autoComplete="off"
-            />
-            
-            {showDropdown && newSymbol.trim().length > 0 && (isSearching || searchResults.length > 0) && (
+            {selectedAsset ? (
+              <div
+                className="flex items-center w-full pl-10 pr-3 py-2.5 rounded-lg transition-colors cursor-pointer"
+                style={{
+                  background: "var(--bg-primary)",
+                  border: "1px solid var(--border-primary)",
+                  color: "var(--text-primary)",
+                }}
+                onClick={() => {
+                  setSelectedAsset(null);
+                  setNewSymbol("");
+                }}
+              >
+                <span className="font-mono font-bold text-sm mr-3">{selectedAsset.symbol}</span>
+                {selectedAsset.shortname && (
+                  <span className="truncate mr-3 text-xs" style={{ color: "var(--text-muted)" }}>
+                    {selectedAsset.shortname}
+                  </span>
+                )}
+                {selectedAsset.quoteType && (
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 mr-auto"
+                    style={{ background: "var(--border-primary)", color: "var(--text-muted)" }}
+                  >
+                    {selectedAsset.quoteType === "EQUITY" ? "STOCK" : selectedAsset.quoteType === "CRYPTOCURRENCY" ? "CRYPTO" : selectedAsset.quoteType}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedAsset(null);
+                    setNewSymbol("");
+                  }}
+                  className="p-1 rounded-md transition-colors text-[var(--text-tertiary)] hover:text-[var(--text-primary)] ml-auto"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={newSymbol}
+                onChange={(e) => {
+                  setNewSymbol(e.target.value.toUpperCase());
+                  selectedFromDropdownRef.current = false;
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0 || isSearching) setShowDropdown(true);
+                }}
+                placeholder="Add symbol (e.g. AAPL, MSFT)"
+                className="block w-full pl-10 pr-3 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
+                style={{
+                  background: "var(--bg-primary)",
+                  border: "1px solid var(--border-primary)",
+                  color: "var(--text-primary)",
+                }}
+                autoComplete="off"
+              />
+            )}
+
+            {showDropdown && !selectedAsset && newSymbol.trim().length > 0 && (isSearching || searchResults.length > 0) && (
               <div
                 className="absolute z-50 mt-1 w-full rounded-lg shadow-2xl overflow-hidden flex flex-col"
                 style={{
@@ -124,6 +167,7 @@ export function WatchlistPage() {
                         key={`${res.symbol}-${i}`}
                         onClick={() => {
                           setNewSymbol(res.symbol);
+                          setSelectedAsset(res);
                           selectedFromDropdownRef.current = true;
                           setShowDropdown(false);
                         }}
@@ -197,18 +241,18 @@ export function WatchlistPage() {
         </form>
 
         <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--border-primary)" }}>
-          <table className="min-w-full divide-y" style={{ borderColor: "var(--border-primary)" }}>
+          <table className="min-w-full">
             <thead style={{ background: "var(--bg-primary)" }}>
-              <tr>
+              <tr className="border-b border-[var(--border-primary)]">
                 <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                  Symbol
+                  Name / Ticker
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--border-primary)", background: "var(--bg-panel)" }}>
+            <tbody style={{ background: "var(--bg-panel)" }}>
               {watchlist.length === 0 ? (
                 <tr>
                   <td colSpan={2} className="px-6 py-12 text-center flex flex-col items-center justify-center gap-2">
@@ -222,11 +266,22 @@ export function WatchlistPage() {
                   </td>
                 </tr>
               ) : (
-                watchlist.map((symbol) => (
-                  <tr key={symbol} className="transition-colors group hover:bg-black/5 dark:hover:bg-white/5">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold" style={{ color: "var(--text-primary)" }}>
-                      {symbol}
-                    </td>
+                watchlist.map((symbol) => {
+                  const quote = quotes.find((q) => q.symbol === symbol);
+                  const stockName = quote?.name || symbol;
+
+                  return (
+                    <tr key={symbol} className="transition-colors group hover:bg-black/5 dark:hover:bg-white/5 border-b border-[var(--border-primary)] last:border-0">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="text-sm font-medium text-[var(--text-secondary)] truncate" title={stockName}>
+                            {stockName}
+                          </span>
+                          <span className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">
+                            {symbol}
+                          </span>
+                        </div>
+                      </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => removeFromWatchlist(symbol)}
@@ -239,8 +294,9 @@ export function WatchlistPage() {
                         <Trash2 size={18} />
                       </button>
                     </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
