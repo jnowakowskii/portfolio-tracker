@@ -78,6 +78,9 @@ interface PortfolioState {
   // privacy state
   isPrivacyModeEnabled: boolean;
 
+  // watchlist state
+  watchlist: string[];
+
   // actions
   setTheme: (theme: "dark" | "light") => void;
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
@@ -86,6 +89,8 @@ interface PortfolioState {
   fetchMarketData: (txs?: Transaction[]) => Promise<void>;
   resetApiStats: () => void;
   togglePrivacyMode: () => void;
+  addToWatchlist: (symbol: string) => void;
+  removeFromWatchlist: (symbol: string) => void;
 }
 
 export const usePortfolioStore = create<PortfolioState>()(
@@ -121,10 +126,22 @@ export const usePortfolioStore = create<PortfolioState>()(
       // privacy state
       isPrivacyModeEnabled: false,
 
+      // watchlist state
+      watchlist: [],
+
       // actions
       setTheme: (theme) => set({ theme }),
       togglePrivacyMode: () => set((state) => ({ isPrivacyModeEnabled: !state.isPrivacyModeEnabled })),
       resetApiStats: () => set({ apiStats: initialApiStats }),
+      addToWatchlist: (symbol) => set((state) => {
+        if (!state.watchlist.includes(symbol)) {
+          return { watchlist: [...state.watchlist, symbol] };
+        }
+        return state;
+      }),
+      removeFromWatchlist: (symbol) => set((state) => ({
+        watchlist: state.watchlist.filter((s) => s !== symbol)
+      })),
       setBaseCurrency: async (currency: SupportedCurrency) => {
         set({ baseCurrency: currency });
         // fetch rates and recalculate
@@ -314,6 +331,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         topPayers: state.topPayers,
         apiStats: state.apiStats,
         isPrivacyModeEnabled: state.isPrivacyModeEnabled,
+        watchlist: state.watchlist,
       }),
     }
   )
