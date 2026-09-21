@@ -164,7 +164,7 @@ export function DividendsPage() {
 
         {/* right card top payers */}
         <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
-          <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Stocks</h2>
+          <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Dividend Payers</h2>
           {topPayers.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No data yet</p>
