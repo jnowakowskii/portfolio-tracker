@@ -20,6 +20,7 @@ import {
   type DividendStats,
   type TopPayer,
   type UpcomingDividend,
+  type ReceivedDividend,
 } from "../services/dividendLogic";
 import { type ApiStat, initialApiStats } from "../types/apiStats";
 import {
@@ -72,6 +73,8 @@ interface PortfolioState {
   dividendStats: DividendStats;
   topPayers: TopPayer[];
   upcomingDividends: UpcomingDividend[];
+  receivedDividends: ReceivedDividend[];
+  totalReceivedDividends: number;
 
   // api state
   isLoadingMarket: boolean;
@@ -121,6 +124,8 @@ export const usePortfolioStore = create<PortfolioState>()(
       },
       topPayers: [],
       upcomingDividends: [],
+      receivedDividends: [],
+      totalReceivedDividends: 0,
 
       // api state
       isLoadingMarket: false,
@@ -190,6 +195,8 @@ export const usePortfolioStore = create<PortfolioState>()(
               dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
               topPayers: [],
               upcomingDividends: [],
+              receivedDividends: [],
+              totalReceivedDividends: 0,
               dividendEvents: [],
             });
             return result;
@@ -215,6 +222,8 @@ export const usePortfolioStore = create<PortfolioState>()(
             dividendStats: divRes.stats,
             topPayers: divRes.topPayers,
             upcomingDividends: divRes.upcomingDividends,
+            receivedDividends: divRes.receivedDividends,
+            totalReceivedDividends: divRes.totalReceivedDividends,
           });
 
           return result;
@@ -247,6 +256,8 @@ export const usePortfolioStore = create<PortfolioState>()(
               dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
               topPayers: [],
               upcomingDividends: [],
+              receivedDividends: [],
+              totalReceivedDividends: 0,
               dividendEvents: [],
               isLoadingMarket: false
             });
@@ -312,6 +323,8 @@ export const usePortfolioStore = create<PortfolioState>()(
             dividendStats: divRes.stats,
             topPayers: divRes.topPayers,
             upcomingDividends: divRes.upcomingDividends,
+            receivedDividends: divRes.receivedDividends,
+            totalReceivedDividends: divRes.totalReceivedDividends,
           });
 
         } finally {
@@ -338,6 +351,8 @@ export const usePortfolioStore = create<PortfolioState>()(
         dividendStats: state.dividendStats,
         topPayers: state.topPayers,
         upcomingDividends: state.upcomingDividends,
+        receivedDividends: state.receivedDividends,
+        totalReceivedDividends: state.totalReceivedDividends,
         apiStats: state.apiStats,
         isPrivacyModeEnabled: state.isPrivacyModeEnabled,
         watchlist: state.watchlist,

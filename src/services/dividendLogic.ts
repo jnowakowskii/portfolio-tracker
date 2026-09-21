@@ -3,7 +3,9 @@ import { Transaction, PortfolioHolding, MarketQuote } from "./marketData";
 export interface DividendEvent {
   symbol: string;
   amount: number;
-  date: number; // unix timestamp
+  date: number; // ex-date unix timestamp
+  paymentDate?: number;
+  payment_date?: number;
 }
 
 export interface MonthlyDividend {
@@ -30,11 +32,22 @@ export interface TopPayer {
   dividendPerShare: number;
 }
 
+export interface ReceivedDividend {
+  symbol: string;
+  name: string;
+  date: string; // dateStr
+  amountNative: number;
+  totalNative: number;
+  currency: string;
+  totalBase: number;
+  dateMs: number; // For sorting
+}
+
 export interface UpcomingDividend {
   symbol: string;
   name: string;
-  amountNative: number;
-  amountBase: number;
+  totalNative: number;
+  totalBase: number;
   currency: string;
   dateMs: number;
   dateStr: string;
@@ -46,6 +59,8 @@ export interface DividendCalculationResult {
   totalAllTime: number;
   topPayers: TopPayer[];
   upcomingDividends: UpcomingDividend[];
+  receivedDividends: ReceivedDividend[];
+  totalReceivedDividends: number;
 }
 
 const MONTH_NAMES = [
@@ -65,6 +80,7 @@ export function calculateDividends(
 ): DividendCalculationResult {
   let totalAllTime = 0;
   let annualIncome = 0;
+  let totalReceivedDividends = 0;
 
   const monthlyData: MonthlyDividend[] = MONTH_NAMES.map(month => ({ month, amount: 0 }));
   const currencyMap = new Map<string, string>();
@@ -132,27 +148,39 @@ export function calculateDividends(
         }
     }
 
+    const hasHistory = symEvents.length > 0;
+
     for (const year of [currentYear - 1, currentYear, currentYear + 1]) {
         for (const month of targetMonths) {
-            const hasActualEvent = symEvents.some(e => {
-                const d = new Date(e.date * 1000);
-                // consider +/- 1 month as the same payment event to avoid duplicates from slight date shifts
-                return d.getFullYear() === year && Math.abs(d.getMonth() - month) <= 1;
-            });
+            const dateMs = new Date(year, month, 15).getTime();
+            const isFuture = dateMs > nowMs;
 
-            if (!hasActualEvent) {
-                const date = new Date(year, month, 15).getTime() / 1000;
-                const amount = isUS ? annualPerShareNative / 4 : annualPerShareNative;
-                augmentedEvents.push({ symbol, amount, date });
+            // Strict rule: Only generate synthetic historical events if NO history exists.
+            // If history exists, we ONLY generate synthetic events for FUTURE projections.
+            if (!hasHistory || isFuture) {
+                const hasActualEvent = symEvents.some(e => {
+                    const d = new Date(e.date * 1000);
+                    // consider +/- 1 month as the same payment event to avoid duplicates from slight date shifts
+                    return d.getFullYear() === year && Math.abs(d.getMonth() - month) <= 1;
+                });
+
+                if (!hasActualEvent) {
+                    const amount = isUS ? annualPerShareNative / 4 : annualPerShareNative;
+                    augmentedEvents.push({ symbol, amount, date: dateMs / 1000 });
+                }
             }
         }
     }
   }
 
   const upcomingDividends: UpcomingDividend[] = [];
+  const receivedDividends: ReceivedDividend[] = [];
 
   for (const event of augmentedEvents) {
-    const eventDateMs = event.date * 1000;
+    const exDateMs = event.date * 1000;
+    const pDate = event.paymentDate || event.payment_date;
+    const paymentDateMs = pDate ? pDate * 1000 : exDateMs;
+    
     const currency = currencyMap.get(event.symbol) || baseCurrency;
     const fxRate = fxRates[currency] || 1.0;
 
@@ -160,7 +188,7 @@ export function calculateDividends(
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
       const txDateMs = new Date(tx.date).getTime();
-      if (txDateMs <= eventDateMs) {
+      if (txDateMs <= exDateMs) {
         trueQuantityAtExDate += tx.side === "BUY" ? tx.quantity : -tx.quantity;
       }
     }
@@ -168,22 +196,41 @@ export function calculateDividends(
     const currentQty = currentHoldingsMap.get(event.symbol) || 0;
     const chartQuantity = trueQuantityAtExDate > 0 ? trueQuantityAtExDate : currentQty;
 
-    if (trueQuantityAtExDate > 0 && eventDateMs <= nowMs) {
-      totalAllTime += (event.amount * trueQuantityAtExDate) * fxRate;
+    const eventDate = new Date(paymentDateMs);
+    const dateStr = eventDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+    if (trueQuantityAtExDate > 0 && paymentDateMs <= nowMs) {
+      const totalBase = (event.amount * trueQuantityAtExDate) * fxRate;
+      totalAllTime += totalBase;
+      totalReceivedDividends += totalBase;
+
+      const quote = Array.isArray(quotes)
+        ? quotes.find((q: any) => q.symbol === event.symbol)
+        : quotes[event.symbol] || Object.values(quotes).find((q: any) => q.symbol === event.symbol);
+
+      receivedDividends.push({
+        symbol: event.symbol,
+        name: quote?.name || event.symbol,
+        date: dateStr,
+        amountNative: event.amount,
+        totalNative: event.amount * trueQuantityAtExDate,
+        currency,
+        totalBase,
+        dateMs: paymentDateMs,
+      });
     }
 
     if (chartQuantity > 0) {
       const payoutBase = (event.amount * chartQuantity) * fxRate;
 
       // Populate monthly chart for the current calendar year (YTD + Projected)
-      const eventDate = new Date(eventDateMs);
       if (eventDate.getFullYear() === currentYear) {
         const monthIndex = eventDate.getMonth();
         monthlyData[monthIndex].amount += payoutBase;
       }
 
       // Populate upcoming dividends (strictly forward-looking)
-      if (eventDateMs >= nowMs) {
+      if (paymentDateMs >= nowMs) {
         const quote = Array.isArray(quotes)
           ? quotes.find((q: any) => q.symbol === event.symbol)
           : quotes[event.symbol] || Object.values(quotes).find((q: any) => q.symbol === event.symbol);
@@ -191,17 +238,18 @@ export function calculateDividends(
         upcomingDividends.push({
           symbol: event.symbol,
           name: quote?.name || event.symbol,
-          amountNative: event.amount * chartQuantity,
-          amountBase: payoutBase,
+          totalNative: event.amount * chartQuantity,
+          totalBase: payoutBase,
           currency,
-          dateMs: eventDateMs,
-          dateStr: eventDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          dateMs: paymentDateMs,
+          dateStr
         });
       }
     }
   }
 
   upcomingDividends.sort((a, b) => a.dateMs - b.dateMs);
+  receivedDividends.sort((a, b) => b.dateMs - a.dateMs);
 
   // 2. forward projection: annual income & top payers
   const topPayers: TopPayer[] = [];
@@ -256,5 +304,7 @@ export function calculateDividends(
     totalAllTime,
     topPayers: topPayers.slice(0, 5),
     upcomingDividends: upcomingDividends.slice(0, 10),
+    receivedDividends,
+    totalReceivedDividends,
   };
 }

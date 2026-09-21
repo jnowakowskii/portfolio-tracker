@@ -13,6 +13,8 @@ export interface MarketQuote {
   ex_dividend_date?: number;
   lastDividendDate?: number;
   last_dividend_date?: number;
+  paymentDate?: number;
+  payment_date?: number;
 }
 
 export interface SymbolSearchResult {

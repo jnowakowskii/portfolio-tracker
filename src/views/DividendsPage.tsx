@@ -10,7 +10,7 @@ import {
 import { usePortfolioStore } from "../store/usePortfolioStore";
 
 export function DividendsPage() {
-  const { monthlyDividends, dividendStats, topPayers, upcomingDividends, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
+  const { monthlyDividends, dividendStats, topPayers, upcomingDividends, receivedDividends, totalReceivedDividends, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
   const mask = "*****";
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -133,7 +133,46 @@ export function DividendsPage() {
         </div>
 
         {/* bottom row */}
-        {/* left upcoming dividends */}
+        {/* left received dividends */}
+        <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
+          <div className="flex justify-between items-end mb-6">
+            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Received Dividends</h2>
+            <div className="text-right">
+              <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>Total</span>
+              <p className="text-lg font-semibold tracking-tight leading-none" style={{ color: "var(--text-secondary)" }}>
+                {isPrivacyModeEnabled ? mask : totalReceivedDividends.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>{baseCurrency}</span>
+              </p>
+            </div>
+          </div>
+          {!receivedDividends || receivedDividends.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No historical dividends recorded yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4 overflow-y-auto max-h-[260px] pr-2 custom-scrollbar">
+              {receivedDividends.map((div, i) => (
+                <div key={i} className="flex items-center justify-between shrink-0">
+                  <div className="flex flex-col">
+                    <span className="font-medium" style={{ color: "var(--text-primary)" }}>{div.symbol}</span>
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{div.date}</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="font-semibold text-green-500">
+                      {isPrivacyModeEnabled ? mask : `+${div.totalNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${div.currency}`}
+                    </span>
+                    {div.currency !== baseCurrency && (
+                      <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                        {isPrivacyModeEnabled ? mask : `≈ ${div.totalBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${baseCurrency}`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* right upcoming dividends */}
         <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
           <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Upcoming Dividends</h2>
           {!upcomingDividends || upcomingDividends.length === 0 ? (
@@ -141,20 +180,22 @@ export function DividendsPage() {
               <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No upcoming dividends</p>
             </div>
           ) : (
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col space-y-4 overflow-y-auto max-h-[260px] pr-2 custom-scrollbar">
               {upcomingDividends.map((div, i) => (
-                <div key={i} className="flex items-center justify-between">
+                <div key={i} className="flex items-center justify-between shrink-0">
                   <div className="flex flex-col">
                     <span className="font-medium" style={{ color: "var(--text-primary)" }}>{div.symbol}</span>
                     <span className="text-xs" style={{ color: "var(--text-muted)" }}>{div.dateStr}</span>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                      {isPrivacyModeEnabled ? mask : `+${div.amountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${div.currency}`}
+                      {isPrivacyModeEnabled ? mask : `+${div.totalNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${div.currency}`}
                     </span>
-                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      {isPrivacyModeEnabled ? mask : `≈ ${div.amountBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${baseCurrency}`}
-                    </span>
+                    {div.currency !== baseCurrency && (
+                      <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                        {isPrivacyModeEnabled ? mask : `≈ ${div.totalBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${baseCurrency}`}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
