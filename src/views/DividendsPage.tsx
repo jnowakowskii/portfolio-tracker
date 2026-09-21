@@ -65,7 +65,7 @@ export function DividendsPage() {
                     "Income"
                   ]}
                 />
-                <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="amount" fill="var(--color-dividend)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -188,7 +188,7 @@ export function DividendsPage() {
                     <span className="text-xs" style={{ color: "var(--text-muted)" }}>{div.date}</span>
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="font-semibold text-green-500">
+                    <span className="font-semibold text-[color:var(--color-success)]">
                       {isPrivacyModeEnabled ? mask : `+${div.totalNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${div.currency}`}
                     </span>
                     {div.currency !== baseCurrency && (

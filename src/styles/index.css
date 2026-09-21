@@ -38,6 +38,7 @@
   --color-danger: #f43f5e;
   --color-danger-bg: rgba(244, 63, 94, 0.08);
   --color-danger-border: rgba(244, 63, 94, 0.2);
+  --color-dividend: #377ef1;
 
   --scrollbar-track: #0a0a0a;
   --scrollbar-thumb: #262626;
@@ -70,6 +71,7 @@
   --btn-primary-text: #0f172a;
   --btn-primary-hover: #f1f5f9;
   --btn-primary-border: #cbd5e1;
+  --color-dividend: #3b82f6;
 
   --scrollbar-track: #f8fafc;
   --scrollbar-thumb: #cbd5e1;
