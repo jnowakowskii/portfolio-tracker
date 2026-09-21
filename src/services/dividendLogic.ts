@@ -78,7 +78,6 @@ export function calculateDividends(
 
   const nowMs = new Date().getTime();
   const currentYear = new Date().getFullYear();
-  const oneYearFromNowMs = nowMs + 365 * 24 * 60 * 60 * 1000;
 
   const augmentedEvents: DividendEvent[] = [...dividendEvents];
   
@@ -157,31 +156,34 @@ export function calculateDividends(
     const currency = currencyMap.get(event.symbol) || baseCurrency;
     const fxRate = fxRates[currency] || 1.0;
 
-    let quantityAtExDate = 0;
+    let trueQuantityAtExDate = 0;
     for (const tx of transactions) {
       if (tx.symbol !== event.symbol) continue;
       const txDateMs = new Date(tx.date).getTime();
       if (txDateMs <= eventDateMs) {
-        quantityAtExDate += tx.side === "BUY" ? tx.quantity : -tx.quantity;
+        trueQuantityAtExDate += tx.side === "BUY" ? tx.quantity : -tx.quantity;
       }
     }
 
-    if (quantityAtExDate > 0) {
-      const payoutBase = (event.amount * quantityAtExDate) * fxRate;
+    const currentQty = currentHoldingsMap.get(event.symbol) || 0;
+    const chartQuantity = trueQuantityAtExDate > 0 ? trueQuantityAtExDate : currentQty;
 
-      if (eventDateMs <= nowMs) {
-        totalAllTime += payoutBase;
-      }
+    if (trueQuantityAtExDate > 0 && eventDateMs <= nowMs) {
+      totalAllTime += (event.amount * trueQuantityAtExDate) * fxRate;
+    }
 
-      // Populate monthly chart for the current calendar year
+    if (chartQuantity > 0) {
+      const payoutBase = (event.amount * chartQuantity) * fxRate;
+
+      // Populate monthly chart for the current calendar year (YTD + Projected)
       const eventDate = new Date(eventDateMs);
       if (eventDate.getFullYear() === currentYear) {
         const monthIndex = eventDate.getMonth();
         monthlyData[monthIndex].amount += payoutBase;
       }
 
-      // Populate upcoming dividends (next 365 days)
-      if (eventDateMs > nowMs && eventDateMs <= oneYearFromNowMs) {
+      // Populate upcoming dividends (strictly forward-looking)
+      if (eventDateMs >= nowMs) {
         const quote = Array.isArray(quotes)
           ? quotes.find((q: any) => q.symbol === event.symbol)
           : quotes[event.symbol] || Object.values(quotes).find((q: any) => q.symbol === event.symbol);
@@ -189,7 +191,7 @@ export function calculateDividends(
         upcomingDividends.push({
           symbol: event.symbol,
           name: quote?.name || event.symbol,
-          amountNative: event.amount * quantityAtExDate,
+          amountNative: event.amount * chartQuantity,
           amountBase: payoutBase,
           currency,
           dateMs: eventDateMs,
