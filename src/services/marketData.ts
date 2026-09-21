@@ -9,6 +9,10 @@ export interface MarketQuote {
   name?: string;
   dividendRate?: number;
   dividend_rate?: number;
+  exDividendDate?: number;
+  ex_dividend_date?: number;
+  lastDividendDate?: number;
+  last_dividend_date?: number;
 }
 
 export interface SymbolSearchResult {

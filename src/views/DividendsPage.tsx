@@ -10,7 +10,7 @@ import {
 import { usePortfolioStore } from "../store/usePortfolioStore";
 
 export function DividendsPage() {
-  const { monthlyDividends, dividendStats, topPayers, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
+  const { monthlyDividends, dividendStats, topPayers, upcomingDividends, baseCurrency, isPrivacyModeEnabled } = usePortfolioStore();
   const mask = "*****";
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -57,12 +57,12 @@ export function DividendsPage() {
                   }}
                   itemStyle={{ color: "#f5f5f5" }}
                   formatter={(value: any) => [
-                    isPrivacyModeEnabled 
+                    isPrivacyModeEnabled
                       ? mask
                       : `${Number(value).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })} ${baseCurrency}`,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })} ${baseCurrency}`,
                     "Income"
                   ]}
                 />
@@ -133,11 +133,33 @@ export function DividendsPage() {
         </div>
 
         {/* bottom row */}
-        {/* left placeholder */}
-        <div className="lg:col-span-6 p-6 rounded-xl flex items-center justify-center min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
-          <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>
-            Upcoming Dividends
-          </p>
+        {/* left upcoming dividends */}
+        <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
+          <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Upcoming Dividends</h2>
+          {!upcomingDividends || upcomingDividends.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No upcoming dividends</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4">
+              {upcomingDividends.map((div, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="font-medium" style={{ color: "var(--text-primary)" }}>{div.symbol}</span>
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{div.dateStr}</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {isPrivacyModeEnabled ? mask : `+${div.amountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${div.currency}`}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                      {isPrivacyModeEnabled ? mask : `≈ ${div.amountBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${baseCurrency}`}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* right card top payers */}

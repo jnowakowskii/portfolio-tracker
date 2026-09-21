@@ -19,6 +19,7 @@ import {
   type MonthlyDividend,
   type DividendStats,
   type TopPayer,
+  type UpcomingDividend,
 } from "../services/dividendLogic";
 import { type ApiStat, initialApiStats } from "../types/apiStats";
 import {
@@ -70,6 +71,7 @@ interface PortfolioState {
   monthlyDividends: MonthlyDividend[];
   dividendStats: DividendStats;
   topPayers: TopPayer[];
+  upcomingDividends: UpcomingDividend[];
 
   // api state
   isLoadingMarket: boolean;
@@ -118,6 +120,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         yieldOnCost: 0,
       },
       topPayers: [],
+      upcomingDividends: [],
 
       // api state
       isLoadingMarket: false,
@@ -186,6 +189,7 @@ export const usePortfolioStore = create<PortfolioState>()(
               monthlyDividends: [],
               dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
               topPayers: [],
+              upcomingDividends: [],
               dividendEvents: [],
             });
             return result;
@@ -210,6 +214,7 @@ export const usePortfolioStore = create<PortfolioState>()(
             monthlyDividends: divRes.monthlyData,
             dividendStats: divRes.stats,
             topPayers: divRes.topPayers,
+            upcomingDividends: divRes.upcomingDividends,
           });
 
           return result;
@@ -241,6 +246,7 @@ export const usePortfolioStore = create<PortfolioState>()(
               monthlyDividends: [],
               dividendStats: { annualIncome: 0, yield: 0, yieldOnCost: 0 },
               topPayers: [],
+              upcomingDividends: [],
               dividendEvents: [],
               isLoadingMarket: false
             });
@@ -305,6 +311,7 @@ export const usePortfolioStore = create<PortfolioState>()(
             monthlyDividends: divRes.monthlyData,
             dividendStats: divRes.stats,
             topPayers: divRes.topPayers,
+            upcomingDividends: divRes.upcomingDividends,
           });
 
         } finally {
@@ -330,6 +337,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         monthlyDividends: state.monthlyDividends,
         dividendStats: state.dividendStats,
         topPayers: state.topPayers,
+        upcomingDividends: state.upcomingDividends,
         apiStats: state.apiStats,
         isPrivacyModeEnabled: state.isPrivacyModeEnabled,
         watchlist: state.watchlist,
