@@ -23,9 +23,8 @@ export function DividendsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* top row */}
-        {/* left card chart */}
-        <div className="lg:col-span-8 p-6 rounded-xl flex flex-col min-h-[400px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
+        {/* top: dividend chart income by month full */}
+        <div className="lg:col-span-12 p-6 rounded-xl flex flex-col min-h-[400px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
           <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>
             Dividend Income by Month
           </h2>
@@ -72,9 +71,9 @@ export function DividendsPage() {
           </div>
         </div>
 
-        {/* right card stats */}
+        {/* middle: stats 1/3 + dividend payers 2/3 */}
+        {/* left card stats */}
         <div className="lg:col-span-4 p-6 rounded-xl flex flex-col justify-center space-y-6 min-h-[400px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
-
           {/* top annual income */}
           <div>
             <p className="text-sm font-medium mb-1" style={{ color: "var(--text-muted)" }}>Annual Income</p>
@@ -86,7 +85,7 @@ export function DividendsPage() {
             </p>
           </div>
 
-          {/* middle monthly and daily */}
+          {/* middle monthly and daily 1/2 1/2 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>Monthly</p>
@@ -129,10 +128,42 @@ export function DividendsPage() {
               </p>
             </div>
           </div>
-
         </div>
 
-        {/* bottom row */}
+        {/* right card top payers */}
+        <div className="lg:col-span-8 p-6 rounded-xl flex flex-col min-h-[400px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
+          <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Dividend Payers</h2>
+          {topPayers.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No data yet</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+              {topPayers.map((payer) => (
+                <div key={payer.symbol} className="flex items-center justify-between shrink-0">
+                  <div className="flex flex-col">
+                    <span className="font-medium" style={{ color: "var(--text-primary)" }}>{payer.symbol}</span>
+                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{payer.name}</span>
+                    <span className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                      {isPrivacyModeEnabled ? mask : payer.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {payer.dividendPerShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {payer.currency}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {isPrivacyModeEnabled ? mask : payer.annualAmountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payer.currency}
+                    </span>
+                    <div className="flex space-x-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
+                      <span>Yield: {payer.yield.toFixed(2)}%</span>
+                      <span>(YoC: {payer.yieldOnCost.toFixed(2)}%)</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* bottom: received 1/2 + upcoming 1/2 */}
         {/* left received dividends */}
         <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
           <div className="flex justify-between items-end mb-6">
@@ -196,39 +227,6 @@ export function DividendsPage() {
                         {isPrivacyModeEnabled ? mask : `≈ ${div.totalBase.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${baseCurrency}`}
                       </span>
                     )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* right card top payers */}
-        <div className="lg:col-span-6 p-6 rounded-xl flex flex-col min-h-[200px]" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "var(--card-shadow)" }}>
-          <h2 className="text-lg font-semibold mb-6" style={{ color: "var(--text-primary)" }}>Dividend Payers</h2>
-          {topPayers.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>No data yet</p>
-            </div>
-          ) : (
-            <div className="flex flex-col space-y-4">
-              {topPayers.map((payer) => (
-                <div key={payer.symbol} className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-medium" style={{ color: "var(--text-primary)" }}>{payer.symbol}</span>
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>{payer.name}</span>
-                    <span className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                      {isPrivacyModeEnabled ? mask : payer.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares x {payer.dividendPerShare.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {payer.currency}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="font-semibold" style={{ color: "var(--text-primary)" }}>
-                      {isPrivacyModeEnabled ? mask : payer.annualAmountNative.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {payer.currency}
-                    </span>
-                    <div className="flex space-x-2 text-xs" style={{ color: "var(--text-tertiary)" }}>
-                      <span>Yield: {payer.yield.toFixed(2)}%</span>
-                      <span>(YoC: {payer.yieldOnCost.toFixed(2)}%)</span>
-                    </div>
                   </div>
                 </div>
               ))}
