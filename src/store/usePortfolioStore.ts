@@ -298,6 +298,26 @@ export const usePortfolioStore = create<PortfolioState>()(
             historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
             set({ portfolioHistory: history });
+
+            // calculate 7d trend
+            marketQuotes = marketQuotes.map(q => {
+              const hist = historicalPrices[q.symbol];
+              if (hist && hist.length > 0) {
+                const latest = hist[hist.length - 1];
+                const targetTimestamp = latest.timestamp - 7 * 24 * 60 * 60;
+                let past = hist[0];
+                for (let i = hist.length - 1; i >= 0; i--) {
+                  if (hist[i].timestamp <= targetTimestamp) {
+                    past = hist[i];
+                    break;
+                  }
+                }
+                const trend7d = past.close ? ((latest.close - past.close) / past.close) * 100 : undefined;
+                return { ...q, trend7d };
+              }
+              return q;
+            });
+            set({ quotes: marketQuotes });
           } catch (error) {
             console.error("Failed to fetch historical prices:", error);
           }

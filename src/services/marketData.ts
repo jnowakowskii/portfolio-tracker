@@ -15,6 +15,9 @@ export interface MarketQuote {
   last_dividend_date?: number;
   paymentDate?: number;
   payment_date?: number;
+  pe?: number;
+  yield_percent?: number;
+  trend7d?: number;
 }
 
 export interface SymbolSearchResult {

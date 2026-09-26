@@ -262,7 +262,7 @@ export function WatchlistPage() {
                   Daily Change
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                  Yield
+                  Dividend Yield
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
                   P/E
@@ -314,13 +314,13 @@ export function WatchlistPage() {
                         {quote?.change_percent != null ? `${quote.change_percent > 0 ? "+" : ""}${quote.change_percent.toFixed(2)}%` : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
-                        {quote?.dividendRate ? `${quote.dividendRate.toFixed(2)}%` : (quote as any)?.yield ? `${(quote as any).yield.toFixed(2)}%` : "—"}
+                        {quote?.dividend_rate ? `${quote.dividend_rate.toFixed(2)}%` : quote?.yield_percent ? `${quote.yield_percent.toFixed(2)}%` : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
-                        {(quote as any)?.pe ? (quote as any).pe.toFixed(2) : "—"}
+                        {quote?.pe ? quote.pe.toFixed(2) : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
-                        {(quote as any)?.trend7d ? `${(quote as any).trend7d > 0 ? "+" : ""}${(quote as any).trend7d.toFixed(2)}%` : "—"}
+                        {quote?.trend7d != null ? `${quote.trend7d > 0 ? "+" : ""}${quote.trend7d.toFixed(2)}%` : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button
