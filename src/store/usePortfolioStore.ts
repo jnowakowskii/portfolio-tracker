@@ -79,6 +79,7 @@ interface PortfolioState {
   // api state
   isLoadingMarket: boolean;
   apiStats: ApiStat;
+  lastFetchedSymbols: string[];
 
   // privacy state
   isPrivacyModeEnabled: boolean;
@@ -91,7 +92,7 @@ interface PortfolioState {
   setBaseCurrency: (currency: SupportedCurrency) => Promise<void>;
   loadTransactions: () => Promise<Transaction[]>;
   importTransactions: (txs: Omit<Transaction, "id">[]) => Promise<void>;
-  fetchMarketData: (txs?: Transaction[]) => Promise<void>;
+  fetchMarketData: (overrideTxs?: Transaction[], forceApiRefresh?: boolean) => Promise<void>;
   resetApiStats: () => void;
   togglePrivacyMode: () => void;
   addToWatchlist: (symbol: string) => Promise<void>;
@@ -130,6 +131,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       // api state
       isLoadingMarket: false,
       apiStats: initialApiStats,
+      lastFetchedSymbols: [],
 
       // privacy state
       isPrivacyModeEnabled: false,
@@ -233,7 +235,7 @@ export const usePortfolioStore = create<PortfolioState>()(
         }
       },
 
-      fetchMarketData: async (overrideTxs?: Transaction[]) => {
+      fetchMarketData: async (overrideTxs?: Transaction[], forceApiRefresh?: boolean) => {
         set({ isLoadingMarket: true });
 
         try {
@@ -259,69 +261,90 @@ export const usePortfolioStore = create<PortfolioState>()(
               receivedDividends: [],
               totalReceivedDividends: 0,
               dividendEvents: [],
-              isLoadingMarket: false
+              isLoadingMarket: false,
+              lastFetchedSymbols: []
             });
             return;
           }
 
-          // fetch market quotes and fx rates
+          const sortedSymbols = [...symbols].sort();
+          const symbolsChanged = JSON.stringify(sortedSymbols) !== JSON.stringify(state.lastFetchedSymbols);
+          const timeSinceLastFetch = Date.now() - (state.apiStats.lastFetchTime ? new Date(state.apiStats.lastFetchTime).getTime() : 0);
+          const needsApiFetch = forceApiRefresh || symbolsChanged || timeSinceLastFetch > 5 * 60 * 1000;
+
           let marketQuotes: MarketQuote[] = state.quotes;
           let rates: FxRates = state.fxRates;
-          const t0 = Date.now();
-          try {
-            const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
-            marketQuotes = data.market_quotes;
-            rates = data.fx_rates;
-            set({
-              quotes: marketQuotes,
-              fxRates: rates,
-              apiStats: applyCallResult(get().apiStats, true, Date.now() - t0)
-            });
-          } catch (error) {
-            const msg = `[Combined] ${String(error).slice(0, 120)}`;
-            set({ apiStats: applyCallResult(get().apiStats, false, Date.now() - t0, msg) });
-            console.error("Failed to fetch combined market data:", error);
-          }
-
-          // fetch dividend events
           let events: DividendEvent[] = state.dividendEvents;
-          try {
-            events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
-            set({ dividendEvents: events });
-          } catch (error) {
-            console.error("Failed to fetch dividend history:", error);
-          }
 
-          // fetch historical prices
-          let historicalPrices: Record<string, HistoricalPrice[]> = {};
-          try {
-            historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
-            const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
-            set({ portfolioHistory: history });
-          } catch (error) {
-            console.error("Failed to fetch historical prices:", error);
-          }
+          if (needsApiFetch) {
+            const t0 = Date.now();
+            try {
+              const data = await getCombinedDataRaw(symbols, currentBaseCurrency);
+              // preserve existing trend data to prevent UI flicker while intraday data is loading
+              marketQuotes = data.market_quotes.map(newQuote => {
+                const existingQuote = state.quotes.find(q => q.symbol === newQuote.symbol);
+                if (existingQuote) {
+                  return {
+                    ...newQuote,
+                    trend7d: existingQuote.trend7d,
+                    history7d: existingQuote.history7d
+                  };
+                }
+                return newQuote;
+              });
+              rates = data.fx_rates;
+              set({
+                quotes: marketQuotes,
+                fxRates: rates,
+                apiStats: applyCallResult(get().apiStats, true, Date.now() - t0)
+              });
+            } catch (error) {
+              const msg = `[Combined] ${String(error).slice(0, 120)}`;
+              set({ apiStats: applyCallResult(get().apiStats, false, Date.now() - t0, msg) });
+              console.error("Failed to fetch combined market data:", error);
+            }
 
-          // fetch intraday prices for sparklines
-          let intradayPrices: Record<string, HistoricalPrice[]> = {};
-          try {
-            intradayPrices = await invoke<Record<string, HistoricalPrice[]>>("get_intraday_prices", { symbols });
-            
-            // calculate 7d trend and history
-            marketQuotes = marketQuotes.map(q => {
-              const intra = intradayPrices[q.symbol];
-              if (intra && intra.length > 0) {
-                const latest = intra[intra.length - 1];
-                const past = intra[0];
-                const trend7d = past.close ? ((latest.close - past.close) / past.close) * 100 : undefined;
-                const history7d = intra.map(h => h.close);
-                return { ...q, trend7d, history7d };
-              }
-              return q;
-            });
-            set({ quotes: marketQuotes });
-          } catch (error) {
-            console.error("Failed to fetch intraday prices:", error);
+            // fetch dividend events
+            try {
+              events = await invoke<DividendEvent[]>("get_dividend_history", { symbols });
+              set({ dividendEvents: events });
+            } catch (error) {
+              console.error("Failed to fetch dividend history:", error);
+            }
+
+            // fetch historical prices
+            let historicalPrices: Record<string, HistoricalPrice[]> = {};
+            try {
+              historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
+              const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
+              set({ portfolioHistory: history });
+            } catch (error) {
+              console.error("Failed to fetch historical prices:", error);
+            }
+
+            // fetch intraday prices for sparklines
+            let intradayPrices: Record<string, HistoricalPrice[]> = {};
+            try {
+              intradayPrices = await invoke<Record<string, HistoricalPrice[]>>("get_intraday_prices", { symbols });
+              
+              // calculate 7d trend and history
+              marketQuotes = marketQuotes.map(q => {
+                const intra = intradayPrices[q.symbol];
+                if (intra && intra.length > 0) {
+                  const latest = intra[intra.length - 1];
+                  const past = intra[0];
+                  const trend7d = past.close ? ((latest.close - past.close) / past.close) * 100 : undefined;
+                  const history7d = intra.map(h => h.close);
+                  return { ...q, trend7d, history7d };
+                }
+                return q;
+              });
+              set({ quotes: marketQuotes });
+            } catch (error) {
+              console.error("Failed to fetch intraday prices:", error);
+            }
+
+            set({ lastFetchedSymbols: sortedSymbols });
           }
 
           // run calculations
