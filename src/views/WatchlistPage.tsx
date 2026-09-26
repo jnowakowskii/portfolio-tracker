@@ -278,14 +278,16 @@ export function WatchlistPage() {
             <tbody style={{ background: "var(--bg-panel)" }}>
               {watchlist.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center flex flex-col items-center justify-center gap-2">
-                    <Search size={32} style={{ color: "var(--border-secondary)" }} className="mb-2" />
-                    <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>
-                      Your watchlist is empty
-                    </span>
-                    <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                      Add symbols above to start tracking them
-                    </span>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search size={32} style={{ color: "var(--border-secondary)" }} className="mb-2" />
+                      <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>
+                        Your watchlist is empty
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                        Add symbols to start tracking them
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ) : (
