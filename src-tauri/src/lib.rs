@@ -523,6 +523,101 @@ async fn fetch_historical_prices(
 }
 
 #[tauri::command]
+async fn get_intraday_prices(
+    symbols: Vec<String>,
+    auth: State<'_, YahooAuth>,
+) -> Result<HashMap<String, Vec<HistoricalPrice>>, String> {
+    let mut unique_symbols = symbols.clone();
+    unique_symbols.sort();
+    unique_symbols.dedup();
+
+    let (mut crumb, mut cookie) = ensure_auth(&auth).await?;
+    let mut results = HashMap::new();
+
+    for symbol in unique_symbols {
+        if symbol.contains("=X") {
+            continue;
+        }
+
+        let mut result = fetch_intraday_prices(&symbol, &crumb, &cookie).await;
+
+        if result.is_err() {
+            if let Ok((new_crumb, new_cookie)) = refresh_auth(&auth).await {
+                crumb = new_crumb;
+                cookie = new_cookie;
+                result = fetch_intraday_prices(&symbol, &crumb, &cookie).await;
+            }
+        }
+
+        if let Ok(prices) = result {
+            if !prices.is_empty() {
+                results.insert(symbol.clone(), prices);
+            }
+        }
+    }
+
+    Ok(results)
+}
+
+async fn fetch_intraday_prices(
+    symbol: &str,
+    crumb: &str,
+    cookie: &str,
+) -> Result<Vec<HistoricalPrice>, String> {
+    let url = format!(
+        "https://query2.finance.yahoo.com/v8/finance/chart/{}?interval=60m&range=7d&crumb={}",
+        symbol, crumb
+    );
+
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+
+    let response = client
+        .get(&url)
+        .header("cookie", cookie)
+        .send()
+        .await
+        .map_err(|e| format!("Network request failed: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("Yahoo API returned status {}", response.status()));
+    }
+
+    let data: YahooChartResponse = match response.json().await {
+        Ok(d) => d,
+        Err(_) => return Ok(vec![]),
+    };
+
+    let mut prices = Vec::new();
+    if let Some(results) = data.chart.result {
+        if let Some(first_result) = results.first() {
+            if let (Some(timestamps), Some(indicators)) =
+                (&first_result.timestamp, &first_result.indicators)
+            {
+                if let Some(quotes) = &indicators.quote {
+                    if let Some(first_quote) = quotes.first() {
+                        if let Some(closes) = &first_quote.close {
+                            for (i, t) in timestamps.iter().enumerate() {
+                                if let Some(Some(close)) = closes.get(i) {
+                                    prices.push(HistoricalPrice {
+                                        timestamp: *t,
+                                        close: *close,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(prices)
+}
+
+#[tauri::command]
 async fn search_symbols(query: String) -> Result<Vec<SymbolSearchResult>, String> {
     if query.trim().is_empty() {
         return Ok(vec![]);
@@ -617,7 +712,8 @@ pub fn run() {
             get_combined_data,
             search_symbols,
             get_dividend_history,
-            get_historical_prices
+            get_historical_prices,
+            get_intraday_prices
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

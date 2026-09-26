@@ -18,6 +18,7 @@ export interface MarketQuote {
   pe?: number;
   yield_percent?: number;
   trend7d?: number;
+  history7d?: number[];
 }
 
 export interface SymbolSearchResult {

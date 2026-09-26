@@ -3,6 +3,7 @@ import { Plus, Trash2, Search, Globe, X, PlusCircle } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
 import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
 import { AddTransactionModal } from "../components/ui/AddTransactionModal";
+import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
 
 export function WatchlistPage() {
   const { watchlist, addToWatchlist, removeFromWatchlist, quotes, fetchMarketData } = usePortfolioStore();
@@ -320,7 +321,27 @@ export function WatchlistPage() {
                         {quote?.pe ? quote.pe.toFixed(2) : "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
-                        {quote?.trend7d != null ? `${quote.trend7d > 0 ? "+" : ""}${quote.trend7d.toFixed(2)}%` : "—"}
+                        {quote?.history7d && quote.history7d.length > 1 ? (
+                          <div className="w-[100px] h-[30px] ml-auto">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={quote.history7d.map((val, idx) => ({ value: val, index: idx }))}>
+                                <YAxis domain={['dataMin', 'dataMax']} hide />
+                                <Line
+                                  type="linear"
+                                  dataKey="value"
+                                  stroke={quote.history7d[quote.history7d.length - 1] >= quote.history7d[0] ? "var(--color-success)" : "var(--color-danger)"}
+                                  strokeWidth={2}
+                                  dot={false}
+                                  isAnimationActive={false}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        ) : quote?.trend7d != null ? (
+                          `${quote.trend7d > 0 ? "+" : ""}${quote.trend7d.toFixed(2)}%`
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button

@@ -298,28 +298,30 @@ export const usePortfolioStore = create<PortfolioState>()(
             historicalPrices = await invoke<Record<string, HistoricalPrice[]>>("get_historical_prices", { symbols });
             const history = generatePortfolioHistory(txs, historicalPrices, rates, currentBaseCurrency, 1825);
             set({ portfolioHistory: history });
+          } catch (error) {
+            console.error("Failed to fetch historical prices:", error);
+          }
 
-            // calculate 7d trend
+          // fetch intraday prices for sparklines
+          let intradayPrices: Record<string, HistoricalPrice[]> = {};
+          try {
+            intradayPrices = await invoke<Record<string, HistoricalPrice[]>>("get_intraday_prices", { symbols });
+            
+            // calculate 7d trend and history
             marketQuotes = marketQuotes.map(q => {
-              const hist = historicalPrices[q.symbol];
-              if (hist && hist.length > 0) {
-                const latest = hist[hist.length - 1];
-                const targetTimestamp = latest.timestamp - 7 * 24 * 60 * 60;
-                let past = hist[0];
-                for (let i = hist.length - 1; i >= 0; i--) {
-                  if (hist[i].timestamp <= targetTimestamp) {
-                    past = hist[i];
-                    break;
-                  }
-                }
+              const intra = intradayPrices[q.symbol];
+              if (intra && intra.length > 0) {
+                const latest = intra[intra.length - 1];
+                const past = intra[0];
                 const trend7d = past.close ? ((latest.close - past.close) / past.close) * 100 : undefined;
-                return { ...q, trend7d };
+                const history7d = intra.map(h => h.close);
+                return { ...q, trend7d, history7d };
               }
               return q;
             });
             set({ quotes: marketQuotes });
           } catch (error) {
-            console.error("Failed to fetch historical prices:", error);
+            console.error("Failed to fetch intraday prices:", error);
           }
 
           // run calculations
