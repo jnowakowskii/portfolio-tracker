@@ -1,18 +1,26 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Search, Globe, X } from "lucide-react";
+import { Plus, Trash2, Search, Globe, X, PlusCircle } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
 import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
+import { AddTransactionModal } from "../components/ui/AddTransactionModal";
 
 export function WatchlistPage() {
-  const { watchlist, addToWatchlist, removeFromWatchlist, quotes } = usePortfolioStore();
+  const { watchlist, addToWatchlist, removeFromWatchlist, quotes, fetchMarketData } = usePortfolioStore();
   const [newSymbol, setNewSymbol] = useState("");
   const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<SymbolSearchResult | null>(null);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [prefilledSymbol, setPrefilledSymbol] = useState("");
+
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const selectedFromDropdownRef = useRef(false);
+
+  useEffect(() => {
+    fetchMarketData();
+  }, [fetchMarketData]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -136,7 +144,7 @@ export function WatchlistPage() {
                 onFocus={() => {
                   if (searchResults.length > 0 || isSearching) setShowDropdown(true);
                 }}
-                placeholder="Add symbol (e.g. AAPL, MSFT)"
+                placeholder="Add symbol"
                 className="block w-full pl-10 pr-3 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 uppercase"
                 style={{
                   background: "var(--bg-primary)",
@@ -248,6 +256,21 @@ export function WatchlistPage() {
                   Name / Ticker
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Price
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Daily Change
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  Yield
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  P/E
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
+                  7D Trend
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
                   Actions
                 </th>
               </tr>
@@ -255,7 +278,7 @@ export function WatchlistPage() {
             <tbody style={{ background: "var(--bg-panel)" }}>
               {watchlist.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-12 text-center flex flex-col items-center justify-center gap-2">
+                  <td colSpan={7} className="px-6 py-12 text-center flex flex-col items-center justify-center gap-2">
                     <Search size={32} style={{ color: "var(--border-secondary)" }} className="mb-2" />
                     <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>
                       Your watchlist is empty
@@ -282,18 +305,46 @@ export function WatchlistPage() {
                           </span>
                         </div>
                       </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => removeFromWatchlist(symbol)}
-                        className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        style={{ color: "var(--color-danger)" }}
-                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                        title="Remove from Watchlist"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-mono" style={{ color: "var(--text-primary)" }}>
+                        {quote?.price != null ? `${quote.price.toFixed(2)} ${quote.currency || ""}` : "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" style={{ color: quote && quote.change_percent >= 0 ? "var(--color-success)" : "var(--color-danger)" }}>
+                        {quote?.change_percent != null ? `${quote.change_percent > 0 ? "+" : ""}${quote.change_percent.toFixed(2)}%` : "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
+                        {quote?.dividendRate ? `${quote.dividendRate.toFixed(2)}%` : (quote as any)?.yield ? `${(quote as any).yield.toFixed(2)}%` : "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
+                        {(quote as any)?.pe ? (quote as any).pe.toFixed(2) : "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm" style={{ color: "var(--text-secondary)" }}>
+                        {(quote as any)?.trend7d ? `${(quote as any).trend7d > 0 ? "+" : ""}${(quote as any).trend7d.toFixed(2)}%` : "—"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => {
+                            setPrefilledSymbol(symbol);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
+                          style={{ color: "var(--text-primary)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "var(--border-primary)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          title="Add Transaction"
+                        >
+                          <PlusCircle size={18} />
+                        </button>
+                        <button
+                          onClick={() => removeFromWatchlist(symbol)}
+                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
+                          style={{ color: "var(--color-danger)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          title="Remove from Watchlist"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
@@ -302,6 +353,11 @@ export function WatchlistPage() {
           </table>
         </div>
       </div>
+      <AddTransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        prefilledSymbol={prefilledSymbol}
+      />
     </div>
   );
 }

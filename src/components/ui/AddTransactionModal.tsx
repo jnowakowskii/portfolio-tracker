@@ -8,6 +8,7 @@ interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   editData?: Transaction | null;
+  prefilledSymbol?: string;
 }
 
 const inputBase: React.CSSProperties = {
@@ -171,7 +172,7 @@ function CustomDatePicker({ date, onChange }: { date: string; onChange: (d: stri
 
 
 
-export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactionModalProps) {
+export function AddTransactionModal({ isOpen, onClose, editData, prefilledSymbol }: AddTransactionModalProps) {
   const [symbol, setSymbol] = useState("");
   const [side, setSide] = useState("BUY");
   const [quantity, setQuantity] = useState("");
@@ -245,11 +246,11 @@ export function AddTransactionModal({ isOpen, onClose, editData }: AddTransactio
         setCurrency(editData.currency as SupportedCurrency);
         setDate(editData.date.split('T')[0]);
       } else {
-        setSymbol(""); setSide("BUY"); setQuantity(""); setPrice(""); setCurrency("PLN");
+        setSymbol(prefilledSymbol || ""); setSide("BUY"); setQuantity(""); setPrice(""); setCurrency("PLN");
         setDate(new Date().toISOString().split('T')[0]);
       }
     }
-  }, [isOpen, editData]);
+  }, [isOpen, editData, prefilledSymbol]);
 
   if (!isOpen) return null;
 
