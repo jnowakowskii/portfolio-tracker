@@ -8,6 +8,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
 export function WatchlistPage() {
   const { watchlist, addToWatchlist, removeFromWatchlist, quotes, fetchMarketData } = usePortfolioStore();
   const [newSymbol, setNewSymbol] = useState("");
+  const [deleteTargetSymbol, setDeleteTargetSymbol] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -73,7 +74,7 @@ export function WatchlistPage() {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-5xl mx-auto w-full">
+    <div className="flex flex-col h-full max-w-6xl mx-auto w-full">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
@@ -257,7 +258,7 @@ export function WatchlistPage() {
                   Name / Ticker
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
-                  Price
+                  Current Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
                   Daily Change
@@ -358,7 +359,7 @@ export function WatchlistPage() {
                           <PlusCircle size={18} />
                         </button>
                         <button
-                          onClick={() => removeFromWatchlist(symbol)}
+                          onClick={() => setDeleteTargetSymbol(symbol)}
                           className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
                           style={{ color: "var(--color-danger)" }}
                           onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
@@ -381,6 +382,50 @@ export function WatchlistPage() {
         onClose={() => setIsModalOpen(false)}
         prefilledSymbol={prefilledSymbol}
       />
+
+      {deleteTargetSymbol !== null && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl overflow-hidden"
+            style={{ background: "var(--bg-panel)", border: "1px solid var(--border-primary)", boxShadow: "0 24px 64px rgba(0,0,0,0.7)" }}
+          >
+            <div className="px-6 py-5" style={{ borderBottom: "1px solid var(--border-primary)" }}>
+              <h2 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>Remove Symbol</h2>
+            </div>
+            <div className="p-6 space-y-5">
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Are you sure you want to remove {deleteTargetSymbol} from your watchlist?
+              </p>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setDeleteTargetSymbol(null)}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                  style={{ background: "transparent", border: "1px solid var(--border-primary)", color: "var(--text-muted)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--bg-hover)"; e.currentTarget.style.color = "var(--text-primary)"; e.currentTarget.style.borderColor = "var(--border-secondary)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border-primary)"; }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    removeFromWatchlist(deleteTargetSymbol);
+                    setDeleteTargetSymbol(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.98]"
+                  style={{ background: "var(--color-danger)", color: "var(--text-primary)", border: "1px solid var(--color-danger)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--color-danger)"; e.currentTarget.style.borderColor = "var(--color-danger)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--color-danger)"; e.currentTarget.style.borderColor = "var(--color-danger)"; }}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
