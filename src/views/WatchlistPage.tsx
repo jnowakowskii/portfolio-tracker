@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Search, Globe, X, PlusCircle, ArrowUp, ArrowDown, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Search, Globe, X, PlusCircle, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
 import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
 import { AddTransactionModal } from "../components/ui/AddTransactionModal";
@@ -479,64 +479,32 @@ export function WatchlistPage() {
                           "—"
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveWatchlistItem(symbol, "up");
-                            }}
-                            disabled={index === 0}
-                            className={`p-1.5 rounded-md transition-all inline-flex items-center justify-center ${
-                              index === 0
-                                ? "opacity-0 group-hover:opacity-20 cursor-not-allowed"
-                                : "opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)]"
-                            }`}
-                            style={{ color: "var(--text-primary)" }}
-                            title={index === 0 ? "Already at top" : "Move up"}
-                          >
-                            <ArrowUp size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveWatchlistItem(symbol, "down");
-                            }}
-                            disabled={index === watchlist.length - 1}
-                            className={`p-1.5 rounded-md transition-all inline-flex items-center justify-center ${
-                              index === watchlist.length - 1
-                                ? "opacity-0 group-hover:opacity-20 cursor-not-allowed"
-                                : "opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)]"
-                            }`}
-                            style={{ color: "var(--text-primary)" }}
-                            title={index === watchlist.length - 1 ? "Already at bottom" : "Move down"}
-                          >
-                            <ArrowDown size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPrefilledSymbol(symbol);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)] inline-flex items-center justify-center"
-                            style={{ color: "var(--text-primary)" }}
-                            title="Add Transaction"
-                          >
-                            <PlusCircle size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTargetSymbol(symbol)}
-                            className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[rgba(244,63,94,0.1)] inline-flex items-center justify-center"
-                            style={{ color: "var(--color-danger)" }}
-                            title="Remove from Watchlist"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPrefilledSymbol(symbol);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
+                          style={{ color: "var(--text-primary)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "var(--border-primary)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          title="Add Transaction"
+                        >
+                          <PlusCircle size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTargetSymbol(symbol)}
+                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
+                          style={{ color: "var(--color-danger)" }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                          title="Remove from Watchlist"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </td>
                     </tr>
                   );
