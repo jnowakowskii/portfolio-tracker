@@ -97,6 +97,8 @@ interface PortfolioState {
   togglePrivacyMode: () => void;
   addToWatchlist: (symbol: string) => Promise<void>;
   removeFromWatchlist: (symbol: string) => void;
+  reorderWatchlist: (startIndex: number, endIndex: number) => void;
+  moveWatchlistItem: (symbol: string, direction: "up" | "down") => void;
 }
 
 export const usePortfolioStore = create<PortfolioState>()(
@@ -153,6 +155,28 @@ export const usePortfolioStore = create<PortfolioState>()(
       removeFromWatchlist: (symbol) => set((state) => ({
         watchlist: state.watchlist.filter((s) => s !== symbol)
       })),
+      reorderWatchlist: (startIndex, endIndex) => set((state) => {
+        if (
+          startIndex < 0 ||
+          startIndex >= state.watchlist.length ||
+          endIndex < 0 ||
+          endIndex >= state.watchlist.length ||
+          startIndex === endIndex
+        ) {
+          return {};
+        }
+        const newWatchlist = [...state.watchlist];
+        const [moved] = newWatchlist.splice(startIndex, 1);
+        newWatchlist.splice(endIndex, 0, moved);
+        return { watchlist: newWatchlist };
+      }),
+      moveWatchlistItem: (symbol, direction) => {
+        const state = get();
+        const index = state.watchlist.indexOf(symbol);
+        if (index === -1) return;
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        get().reorderWatchlist(index, targetIndex);
+      },
       setBaseCurrency: async (currency: SupportedCurrency) => {
         set({ baseCurrency: currency });
         // fetch rates and recalculate

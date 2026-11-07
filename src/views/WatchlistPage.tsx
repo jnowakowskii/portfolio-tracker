@@ -1,12 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Search, Globe, X, PlusCircle } from "lucide-react";
+import { Plus, Trash2, Search, Globe, X, PlusCircle, ArrowUp, ArrowDown, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { usePortfolioStore } from "../store/usePortfolioStore";
 import { searchSymbols, getExchangeFlag, type SymbolSearchResult } from "../services/marketData";
 import { AddTransactionModal } from "../components/ui/AddTransactionModal";
 import { LineChart, Line, ResponsiveContainer, YAxis } from "recharts";
 
+interface DragState {
+  fromIndex: number;
+  overIndex: number;
+}
+
 export function WatchlistPage() {
-  const { watchlist, addToWatchlist, removeFromWatchlist, quotes, fetchMarketData } = usePortfolioStore();
+  const { watchlist, addToWatchlist, removeFromWatchlist, reorderWatchlist, moveWatchlistItem, quotes, fetchMarketData } = usePortfolioStore();
   const [newSymbol, setNewSymbol] = useState("");
   const [deleteTargetSymbol, setDeleteTargetSymbol] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<SymbolSearchResult[]>([]);
@@ -14,11 +19,85 @@ export function WatchlistPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<SymbolSearchResult | null>(null);
 
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  dragStateRef.current = dragState;
+  const tableRef = useRef<HTMLTableElement>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [prefilledSymbol, setPrefilledSymbol] = useState("");
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const selectedFromDropdownRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, []);
+
+  const handlePointerDown = (index: number, e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+
+    const initialDrag: DragState = { fromIndex: index, overIndex: index };
+    dragStateRef.current = initialDrag;
+    setDragState(initialDrag);
+
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const tableRect = tableRef.current?.getBoundingClientRect();
+      const clampedX = tableRect
+        ? Math.max(tableRect.left + 20, Math.min(tableRect.right - 20, moveEvent.clientX))
+        : moveEvent.clientX;
+      const clampedY = tableRect
+        ? Math.max(tableRect.top + 40, Math.min(tableRect.bottom - 10, moveEvent.clientY))
+        : moveEvent.clientY;
+      const el = document.elementFromPoint(clampedX, clampedY);
+      const tr = el?.closest("tr[data-watchlist-index]");
+      if (tr) {
+        const targetIdx = Number(tr.getAttribute("data-watchlist-index"));
+        if (!isNaN(targetIdx) && dragStateRef.current && dragStateRef.current.overIndex !== targetIdx) {
+          const updated = { ...dragStateRef.current, overIndex: targetIdx };
+          dragStateRef.current = updated;
+          setDragState(updated);
+        }
+      }
+    };
+
+    const cleanup = () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+
+    const handlePointerUp = () => {
+      cleanup();
+      const current = dragStateRef.current;
+      if (current && current.fromIndex !== current.overIndex) {
+        reorderWatchlist(current.fromIndex, current.overIndex);
+      }
+      dragStateRef.current = null;
+      setDragState(null);
+    };
+
+    const handleKeyDown = (keyEvent: KeyboardEvent) => {
+      if (keyEvent.key === "Escape") {
+        cleanup();
+        dragStateRef.current = null;
+        setDragState(null);
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("keydown", handleKeyDown);
+  };
 
   useEffect(() => {
     fetchMarketData();
@@ -251,7 +330,7 @@ export function WatchlistPage() {
         </form>
 
         <div className="overflow-x-auto rounded-lg border" style={{ borderColor: "var(--border-primary)" }}>
-          <table className="min-w-full">
+          <table ref={tableRef} className="min-w-full">
             <thead style={{ background: "var(--bg-primary)" }}>
               <tr className="border-b border-[var(--border-primary)]">
                 <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-tertiary)" }}>
@@ -293,20 +372,76 @@ export function WatchlistPage() {
                   </td>
                 </tr>
               ) : (
-                watchlist.map((symbol) => {
+                watchlist.map((symbol, index) => {
                   const quote = quotes.find((q) => q.symbol === symbol);
                   const stockName = quote?.name || symbol;
 
+                  const isDraggingThis = dragState?.fromIndex === index;
+                  const isDropTarget = dragState !== null && dragState.overIndex === index && dragState.fromIndex !== index;
+                  const isMovingUp = dragState !== null && dragState.fromIndex > index;
+
                   return (
-                    <tr key={symbol} className="transition-colors group hover:bg-black/5 dark:hover:bg-white/5 border-b border-[var(--border-primary)] last:border-0">
+                    <tr
+                      key={symbol}
+                      data-watchlist-index={index}
+                      className={`transition-colors group hover:bg-black/5 dark:hover:bg-white/5 border-b border-[var(--border-primary)] last:border-0 ${
+                        isDraggingThis
+                          ? "opacity-35 bg-[var(--bg-primary)]"
+                          : isDropTarget
+                          ? isMovingUp
+                            ? "bg-blue-500/10 shadow-[inset_0_2px_0_0_#3b82f6]"
+                            : "bg-blue-500/10 shadow-[inset_0_-2px_0_0_#3b82f6]"
+                          : ""
+                      }`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="text-sm font-medium text-[var(--text-secondary)] truncate" title={stockName}>
-                            {stockName}
-                          </span>
-                          <span className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">
-                            {symbol}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          {watchlist.length > 1 && (
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              <div
+                                onPointerDown={(e) => handlePointerDown(index, e)}
+                                style={{ touchAction: "none" }}
+                                title="Drag to rearrange"
+                                className="cursor-grab active:cursor-grabbing p-1.5 -ml-2 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)] transition-all opacity-40 group-hover:opacity-100 select-none"
+                              >
+                                <GripVertical size={16} />
+                              </div>
+                              <div className="flex flex-col -space-y-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveWatchlistItem(symbol, "up");
+                                  }}
+                                  disabled={index === 0}
+                                  className="p-0.5 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)] disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                                  title={index === 0 ? "Already at top" : "Move up"}
+                                >
+                                  <ChevronUp size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveWatchlistItem(symbol, "down");
+                                  }}
+                                  disabled={index === watchlist.length - 1}
+                                  className="p-0.5 rounded text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)] disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                                  title={index === watchlist.length - 1 ? "Already at bottom" : "Move down"}
+                                >
+                                  <ChevronDown size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-medium text-[var(--text-secondary)] truncate" title={stockName}>
+                              {stockName}
+                            </span>
+                            <span className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">
+                              {symbol}
+                            </span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-mono" style={{ color: "var(--text-primary)" }}>
@@ -344,30 +479,64 @@ export function WatchlistPage() {
                           "—"
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => {
-                            setPrefilledSymbol(symbol);
-                            setIsModalOpen(true);
-                          }}
-                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
-                          style={{ color: "var(--text-primary)" }}
-                          onMouseEnter={e => (e.currentTarget.style.background = "var(--border-primary)")}
-                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                          title="Add Transaction"
-                        >
-                          <PlusCircle size={18} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTargetSymbol(symbol)}
-                          className="p-2 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 inline-block"
-                          style={{ color: "var(--color-danger)" }}
-                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(244,63,94,0.1)")}
-                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                          title="Remove from Watchlist"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveWatchlistItem(symbol, "up");
+                            }}
+                            disabled={index === 0}
+                            className={`p-1.5 rounded-md transition-all inline-flex items-center justify-center ${
+                              index === 0
+                                ? "opacity-0 group-hover:opacity-20 cursor-not-allowed"
+                                : "opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)]"
+                            }`}
+                            style={{ color: "var(--text-primary)" }}
+                            title={index === 0 ? "Already at top" : "Move up"}
+                          >
+                            <ArrowUp size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveWatchlistItem(symbol, "down");
+                            }}
+                            disabled={index === watchlist.length - 1}
+                            className={`p-1.5 rounded-md transition-all inline-flex items-center justify-center ${
+                              index === watchlist.length - 1
+                                ? "opacity-0 group-hover:opacity-20 cursor-not-allowed"
+                                : "opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)]"
+                            }`}
+                            style={{ color: "var(--text-primary)" }}
+                            title={index === watchlist.length - 1 ? "Already at bottom" : "Move down"}
+                          >
+                            <ArrowDown size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrefilledSymbol(symbol);
+                              setIsModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[var(--border-primary)] inline-flex items-center justify-center"
+                            style={{ color: "var(--text-primary)" }}
+                            title="Add Transaction"
+                          >
+                            <PlusCircle size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTargetSymbol(symbol)}
+                            className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-[rgba(244,63,94,0.1)] inline-flex items-center justify-center"
+                            style={{ color: "var(--color-danger)" }}
+                            title="Remove from Watchlist"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
